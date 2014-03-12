@@ -1,0 +1,36 @@
+{% load staticfiles %}
+<html>
+<head>
+    <meta charset="utf-8">
+<title>{{ page_title }}</title>
+    <link rel="stylesheet" href="{% static 'Forum/SCEditor/minified/themes/default.min.css' %}" type="text/css" media="all" />
+    <!-- Bootstrap core CSS -->
+    <link href="{% static 'Forum/css/bootstrap.min.css' %}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{% static 'Forum/css/starter-template.css' %}" rel="stylesheet">
+</head>
+<body>
+    <strong>{{ title }}</strong>
+    <form role="form" action="" method="POST">
+        {% csrf_token %}
+        {# Include the visible fields #}
+        {% for field in form.visible_fields %}
+          <div class="form-group">
+            <strong>{{ field.label }}:</strong><br>
+            {{ field }}
+            <span class="help-block">{{ field.help_text | safe }}</span>
+            {% if field.errors %}
+            <div class="alert alert-danger">
+              {{ field.errors }}
+            </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      <button class="btn btn-md btn-success" type="submit">{{ submit_btn_text }}</button>
+    </form>
+
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript" src="{% static 'Forum/SCEditor/minified/jquery.sceditor.bbcode.min.js' %}"></script>
+</body>
+</html>
