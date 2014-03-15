@@ -8,10 +8,8 @@ if you wish to use that extra data on the forum display. p.e. avatar image, etc)
 Your User model must use the django default permission system (at least for the forum permissions).
 """
 # User model
-#from django.contrib.auth.models import User as def_User
-#User = def_User
-from django.contrib.auth.models import User as django_default_user
-User = django_default_user
+from django.contrib.auth.models import User as def_User
+User = def_User
 
 # Templates
 MAIN_FORUM_TEMPLATE = 'Forum/view_forum.html'

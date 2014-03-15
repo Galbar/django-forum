@@ -1,8 +1,10 @@
-<html>
-<head>
-<title>Can't acces this page</title>
-</head>
-<body>
-You don't have permission to view this page.
-</body>
-</html>
+{% extends 'Forum/index.html' %}
+{% load staticfiles %}
+{% block head_title %}
+    Can't access
+{% endblock %}
+{% block forum_content %}
+    <div class="alert alert-danger">
+        <strong>Sorry...</strong> You don't have permission to access this page.
+    </div>
+{% endblock %}

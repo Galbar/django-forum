@@ -6,7 +6,7 @@ class Forum(models.Model):
     def _get_main_forum(self):
         return self.subforum_set.get(local_id=0)
 
-    local_id = models.IntegerField()
+    local_id = models.IntegerField(unique=True)
     name = models.CharField(max_length=100) #name of the Forum instance (for listing and icons and stuff)
     main_forum = property(_get_main_forum)
     admin_permission = models.CharField(max_length=40, default="none")
@@ -28,6 +28,8 @@ class Subforum(models.Model):
     create_thread_permission = models.CharField(max_length=40, default="none")
     reply_thread_permission = models.CharField(max_length=40, default="none")
     description = models.TextField()
+    creator = models.ForeignKey(User, null=True)
+    creation_datetime = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         unique_together = ('local_id','forum')
@@ -126,7 +128,9 @@ class PostReported(models.Model):
     post = models.ForeignKey(Post)
     user = models.ForeignKey(User, related_name="+")
     reason = models.CharField(max_length=500)
+    datetime = models.DateTimeField(auto_now_add=True)
     class Meta:
+        unique_together = ('post','user', 'datetime')
         verbose_name_plural = "Posts Reported"
     def __unicode__(self):
         return str(self.post.id) + "-" + self.post.title
@@ -147,3 +151,10 @@ class LastUserVisit(models.Model):
     thread = models.ForeignKey(Thread)
     datetime = models.DateTimeField()
     user = models.ForeignKey(User)
+
+class Quote(models.Model):
+    user = models.ForeignKey(User)
+    post = models.ForeignKey(Post)
+    thread = models.ForeignKey(Thread)
+    class Meta:
+        unique_together = ('user','post')

@@ -3,164 +3,199 @@
 {{ thread.forum.name }} · {{ thread.parent.name }} · {{ thread.name }}
 {% endblock %}
 {% block forum_content %}
-    <h1 class="forum-page-title">{{ thread.name }}</h1>
+	<h1 class="forum-page-title">{{ thread.name }}</h1>
+	<ol class="breadcrumb">
+		<span class="glyphicon glyphicon-home"></span>
+		{% for l in thread.parent.getPathAsList %}
+			<li>
+				{% if l == thread.forum.main_forum %}
+					<a href="{% url 'Forum.views.forum' forum_id=thread.forum.local_id %}">
+				{% else %}
+					<a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=l|slugify %}">
+				{% endif %}
+					{{ l.name }}
+				</a>
+			</li>
+		{% endfor %}
+		<li>
+			{% if thread.parent == thread.forum.main_forum %}
+				<a href="{% url 'Forum.views.forum' forum_id=thread.forum.local_id %}">
+			{% else %}
+				<a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=thread.parent|slugify %}">
+			{% endif %}
+				{{ thread.parent.name }}
+			</a>
+		</li>
+		<li class="active">
+			{{ thread.name }}
+		</li>
+	</ol>
+	<div class="row">
+		<div class="col-xs-12 col-sm-6">
 
-
-    <ol class="breadcrumb">
-        <span class="glyphicon glyphicon-home"></span>
-        {% for l in thread.parent.getPathAsList %}
-            <li>
-                {% if l == thread.forum.main_forum %}
-                    <a href="{% url 'Forum.views.forum' forum_id=thread.forum.local_id %}">
-                {% else %}
-                    <a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=l|slugify %}">
-                {% endif %}
-                    {{ l.name }}
-                </a>
-            </li>
-        {% endfor %}
-        <li>
-            {% if thread.parent == thread.forum.main_forum %}
-                <a href="{% url 'Forum.views.forum' forum_id=thread.forum.local_id %}">
-            {% else %}
-                <a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=thread.parent|slugify %}">
-            {% endif %}
-                {{ thread.parent.name }}
-            </a>
-        </li>
-        <li class="active">
-            {{ thread.name }}
-        </li>
-    </ol>
-    <div class="row">
-        <div class="col-xs-12 col-sm-6">
-
-        </div>
-        <div class="col-sm-6 hidden-xs text-right">
-            <ul class="pagination pagination-top">
-                {% if thread_current_page|add:-1 >= thread_pages|first %}
-                    <li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:-1 %}">&laquo;</a></li>
-                {% endif %}
-                {% for i in thread_pages %}
-                    {% if i == thread_current_page %}
-                        <li class="active">
-                    {% else %}
-                        <li>
-                    {% endif %}
-                        <a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=i %}">{{ i }}</a>
-                    </li>
-                {% endfor %}
-                {% if thread_current_page|add:1 <= thread_pages|last %}
-                    <li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:1 %}">&raquo;</a></li>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
+		</div>
+		<div class="col-sm-6 hidden-xs text-right">
+			<ul class="pagination pagination-top">
+				{% if thread_current_page|add:-1 >= thread_pages|first %}
+					<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:-1 %}">&laquo;</a></li>
+				{% endif %}
+				{% for i in thread_pages %}
+					{% if i == thread_current_page %}
+						<li class="active">
+					{% else %}
+						<li>
+					{% endif %}
+						<a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=i %}">{{ i }}</a>
+					</li>
+				{% endfor %}
+				{% if thread_current_page|add:1 <= thread_pages|last %}
+					<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:1 %}">&raquo;</a></li>
+				{% endif %}
+			</ul>
+		</div>
+	</div>
 <div class="well thread-body">
 {% for post in post_list %}
-    <div class="panel panel-info">
-        <div class="panel-heading">
-            <div class="row">
-                <div class="col-xs-12 col-sm-6">
-                    {{ post.title }}
-                </div>
-                <div class="col-sm-6 hidden-xs text-right">
-                    <span>{{ post.publication_datetime|date:"m-d-Y H:i:s" }}</span>
-                </div>
-            </div>
-        </div>
-        <div class="panel-body post-body">
-            <div class="row">
-                <div class="col-xs-12 col-sm-2 text-center post-info">
-                    {% if post.user_is_admin %}
-                        <span class="text-warning">
-                    {% elif post.user_is_mod %}
-                        <span class="text-danger">
-                    {% endif %}
-                    <strong>{{ post.publisher.username }}</strong>
-                    <br>
-                    {% if post.user_is_admin %}
-                        Administrator
-                        </span>
-                        <br>
-                    {% elif post.user_is_mod %}
-                        Moderator
-                        </span>
-                        <br>
-                    {% endif %}
-                    Posts: {{ post.publisher.post_set.count }}
-                </div>
-                <div class="col-xs-12 col-sm-10 post-content">
-                    {{ post.content }}
-                </div>
-            </div>
-        </div>
-        <div class="panel-footer">
-            <div class="row">
-                <div class="col-sm-6 hidden-xs">
-                    {% if post.postedited_set.count %}
-                        <small>Last edition by 
-                            {% if post.postedited_set.last.user_is_administrator %}
-                                <span class="text-warning">
-                            {% elif post.postedited_set.last.user_is_moderator %}
-                                <span class="text-danger">
-                            {% else %}
-                                <span>
-                            {% endif %}
-                            <strong>{{ post.postedited_set.last.user.username }}</strong>
-                            </span>
-                             on {{ post.postedited_set.last.datetime|date:"m-d-Y H:i:s" }}
-                         </small>
-                    {% endif %}
-                </div>
-                <div class="col-xs-12 col-sm-6 text-right">
-                    <div class="btn-group text-left">
-                        {% if can_post %}
-                            <a class="btn btn-default" href="{% url 'Forum.views.replyThread' forum_id=thread.forum.local_id thread_id=thread|slugify %}"><span class="glyphicon glyphicon-comment"></span> Reply</a>
-                        {% endif %}
-                        {% if user == post.publisher %}
-                            <a class="btn btn-default" href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
-                        {% elif is_moderator %}
-                            <a class="btn btn-default" href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-pencil"></span> Moderate</a>
-                        {% endif %}
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                              <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu pull-right">
-                                {% if user.is_authenticated %}
-                                    <li>
-                                        <a href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}">Report</a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+	<div class="panel panel-info">
+		<div class="panel-heading">
+			<div class="row">
+				<div class="col-xs-12 col-sm-6">
+					{% if post.title != "" %}
+						<a name="{{ post.local_id }}" href="{% url 'Forum.views.post' post_id=post.local_id %}">{{ post.title }}</a>
+					{% else %}
+						<a name="{{ post.local_id }}" href="{% url 'Forum.views.post' post_id=post.local_id %}">#{{ post.local_id }}</a>
+					{% endif %}
+				</div>
+				<div class="col-sm-6 hidden-xs text-right">
+					<span>{{ post.publication_datetime|date:"m-d-Y H:i:s" }}</span>
+				</div>
+			</div>
+		</div>
+		<div class="panel-body post-body">
+			<div class="row">
+				<div class="col-xs-12 col-sm-2 text-center post-info">
+					{% if post.user_is_admin %}
+						<span class="text-warning">
+					{% elif post.user_is_mod %}
+						<span class="text-danger">
+					{% endif %}
+					<strong>{{ post.publisher.username }}</strong>
+					<br>
+					{% if post.user_is_admin %}
+						Administrator
+						</span>
+						<br>
+					{% elif post.user_is_mod %}
+						Moderator
+						</span>
+						<br>
+					{% endif %}
+					Posts: {{ post.publisher.post_set.count }}
+				</div>
+				<div class="col-xs-12 col-sm-10 post-content">
+					{{ post.content|linebreaks }}
+				</div>
+			</div>
+		</div>
+		<div class="panel-footer">
+			<div class="row">
+				<div class="col-sm-6 hidden-xs">
+					{% if post.postedited_set.count %}
+						<small>Last edition by 
+							{% if post.postedited_set.last.user_is_administrator %}
+								<span class="text-warning">
+							{% elif post.postedited_set.last.user_is_moderator %}
+								<span class="text-danger">
+							{% else %}
+								<span>
+							{% endif %}
+							<strong>{{ post.postedited_set.last.user.username }}</strong>
+							</span>
+							 on {{ post.postedited_set.last.datetime|date:"m-d-Y H:i:s" }}
+						 </small>
+					{% endif %}
+				</div>
+				<div class="col-xs-12 col-sm-6 text-right">
+					<div class="btn-group text-left">
+						{% if user.is_authenticated %}
+							{% if can_post %}
+								<a class="btn btn-sm btn-default" href="{% url 'Forum.views.replyThread' forum_id=thread.forum.local_id thread_id=thread|slugify %}"><span class="glyphicon glyphicon-comment"></span><span class="hidden-xs"> Reply</span></a>
+							{% endif %}
+							{% if user == post.publisher %}
+								<a class="btn btn-sm btn-default" href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-pencil"></span><span class="hidden-xs"> Edit</span></a>
+							{% endif %}
+								<button class="btn btn-sm btn-default quote-btn" post-id="{{ post.local_id }}" >
+									{% if post.is_quoted %}
+										<span class="glyphicon glyphicon-minus"></span><span class="hidden-xs"> Quote</span>
+									{% else %}
+										<span class="glyphicon glyphicon-plus"></span><span class="hidden-xs"> Quote</span>
+									{% endif %}
+								</button>
+							<div class="btn-group">
+								<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown">
+									<span class="caret"></span>
+								</button>
+								<ul class="dropdown-menu pull-right">
+									{% if is_moderator %}
+										<li>
+											<a href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-pencil"></span> Moderate</a>
+										</li>
+									{% endif %}
+									<li>
+										<a href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-warning-sign"></span> Report</a>
+									</li>
+								</ul>
+							</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 {% endfor %}
 </div>
 <div class="row">
-    <div class="col-xs-12 text-right">
-        <ul class="pagination pagination-bottom">
-            {% if thread_current_page|add:-1 >= thread_pages|first %}
-                <li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:-1 %}">&laquo;</a></li>
-            {% endif %}
-            {% for i in thread_pages %}
-                {% if i == thread_current_page %}
-                    <li class="active">
-                {% else %}
-                    <li>
-                {% endif %}
-                    <a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=i %}">{{ i }}</a>
-                </li>
-            {% endfor %}
-            {% if thread_current_page|add:1 <= thread_pages|last %}
-                <li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:1 %}">&raquo;</a></li>
-            {% endif %}
-        </ul>
-    </div>
+	<div class="col-xs-12 text-right">
+		<ul class="pagination pagination-bottom">
+			{% if thread_current_page|add:-1 >= thread_pages|first %}
+				<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:-1 %}">&laquo;</a></li>
+			{% endif %}
+			{% for i in thread_pages %}
+				{% if i == thread_current_page %}
+					<li class="active">
+				{% else %}
+					<li>
+				{% endif %}
+					<a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=i %}">{{ i }}</a>
+				</li>
+			{% endfor %}
+			{% if thread_current_page|add:1 <= thread_pages|last %}
+				<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:1 %}">&raquo;</a></li>
+			{% endif %}
+		</ul>
+	</div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+	$(".quote-btn").click(function() {
+		var button = $(this).children("span").first();
+		var post_id = $(this).attr("post-id");
+		$.ajax({
+			url: "{% url 'Forum.views.forum' forum_id=forum_id %}"+"post/"+post_id+"/quote/",
+		})
+		.done(function(data) {
+			console.log(data);
+			console.log(button.html());
+			button.removeClass("glyphicon-minus");
+			button.removeClass("glyphicon-plus");
+			if (data.action == "added") {
+				button.addClass("glyphicon-minus");
+			}
+			else if (data.action == "removed") {
+				button.addClass("glyphicon-plus");
+			}
+		})
+	});
+</script>
 {% endblock %}

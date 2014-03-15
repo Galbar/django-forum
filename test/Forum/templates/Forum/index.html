@@ -2,75 +2,75 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="Alessio Linares">
-    <link rel="shortcut icon" href="">
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="author" content="Alessio Linares">
+	<link rel="shortcut icon" href="">
 
-    <title>{% block head_title %}{% endblock %}</title>
+	<title>{% block head_title %}{% endblock %}</title>
 
-    <!-- Bootstrap core CSS -->
-    <link href="{% static 'Forum/css/bootstrap.min.css' %}" rel="stylesheet">
-    <link href="{% static 'Forum/css/bootstrap-theme.min.css' %}" rel="stylesheet">
-    <link href="{% static 'Forum/css/forum.css' %}" rel="stylesheet">
+	<!-- Bootstrap core CSS -->
+	<link href="{% static 'Forum/css/bootstrap.min.css' %}" rel="stylesheet">
+	<link href="{% static 'Forum/css/bootstrap-theme.min.css' %}" rel="stylesheet">
+	<link href="{% static 'Forum/css/forum.css' %}" rel="stylesheet">
 
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-      <![endif]-->
-  </head>
-
-  <body>
-
-    <div class="navbar navbar-inverse" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="{% url 'base_forum' forum_id=forum_id %}">Django Forum App</a>
-            </div>
-            <div class="collapse navbar-collapse">
-                <ul class="nav navbar-nav">
-                    <li class="active"><a href="{% url 'base_forum' forum_id=forum_id %}">Forum</a></li>
-                </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    {% if user.is_authenticated %}
-                        <li>
-                            <a href="#"><span class="glyphicon glyphicon-user"></span> {{ user.username }}</a>
-                        </li>
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="{% url 'Forum.views.logout' forum_id=forum_id %}">Logout</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li>
-                            <a href="{% url 'Forum.views.login' %}">Login</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div><!--/.nav-collapse -->
-    </div>
+	<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+		<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+</head>
+<body>
+	<div class="navbar navbar-inverse" role="navigation">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="{% url 'base_forum' forum_id=forum_id %}">Django Forum App</a>
+			</div>
+			<div class="collapse navbar-collapse">
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="{% url 'base_forum' forum_id=forum_id %}">Forum</a></li>
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+					{% if user.is_authenticated %}
+						<li>
+							<a href="#"><span class="glyphicon glyphicon-user"></span> {{ user.username }}</a>
+						</li>
+						<li class="dropdown">
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b></a>
+							<ul class="dropdown-menu">
+								<li><a href="{% url 'Forum.views.logout' forum_id=forum_id %}">Logout</a></li>
+							</ul>
+						</li>
+					{% else %}
+						<li>
+							<a href="{% url 'Forum.views.login' %}">Login</a>
+						</li>
+					{% endif %}
+				</ul>
+			</div>
+		</div><!--/.nav-collapse -->
+	</div>
 
 <div class="container forum-content">
-  {% block forum_content %}
-  {% endblock %}
+	{% block forum_content %}
+	{% endblock %}
 </div><!-- /.container -->
 
 
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script src="{% static 'Forum/js/bootstrap.min.js' %}"></script>
+	<!-- Bootstrap core JavaScript
+	================================================== -->
+	<!-- Placed at the end of the document so the pages load faster -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script src="{% static 'Forum/js/bootstrap.min.js' %}"></script>
+	{% block scripts %}
+	{% endblock %}
 </body>
 </html>
