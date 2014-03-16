@@ -15,6 +15,7 @@ class ForumAdmin(admin.ModelAdmin):
         )
         return mark_safe(u'<a href="{u}">'.format(u=url)+instance.main_forum.__unicode__()+'</a>')
 
+"""
     fieldsets = [
     ('General',         {'fields':[('name','unique_id'),('admin_main_forum')]}),
     ('Permissions',     {'fields':['admin_permission']}),
@@ -22,7 +23,7 @@ class ForumAdmin(admin.ModelAdmin):
     ]
 
     readonly_fields = ('admin_main_forum','unique_id',)
-
+"""
 
 class PostEditedInline(admin.StackedInline):
     model = PostEdited

@@ -3,7 +3,7 @@
 {{ thread.forum.name }} · {{ thread.parent.name }} · {{ thread.name }}
 {% endblock %}
 {% block forum_content %}
-	<h1 class="forum-page-title">{{ thread.name }}</h1>
+	<h1 class="underlined-element">{{ thread.name }}</h1>
 	<ol class="breadcrumb">
 		<span class="glyphicon glyphicon-home"></span>
 		{% for l in thread.parent.getPathAsList %}
@@ -11,7 +11,7 @@
 				{% if l == thread.forum.main_forum %}
 					<a href="{% url 'Forum.views.forum' forum_id=thread.forum.local_id %}">
 				{% else %}
-					<a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=l|slugify %}">
+					<a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=l.local_id subforum_slug=l.slug %}">
 				{% endif %}
 					{{ l.name }}
 				</a>
@@ -21,7 +21,7 @@
 			{% if thread.parent == thread.forum.main_forum %}
 				<a href="{% url 'Forum.views.forum' forum_id=thread.forum.local_id %}">
 			{% else %}
-				<a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=thread.parent|slugify %}">
+				<a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=thread.parent.local_id subforum_slug=thread.parent.slug %}">
 			{% endif %}
 				{{ thread.parent.name }}
 			</a>
@@ -37,7 +37,7 @@
 		<div class="col-sm-6 hidden-xs text-right">
 			<ul class="pagination pagination-top">
 				{% if thread_current_page|add:-1 >= thread_pages|first %}
-					<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:-1 %}">&laquo;</a></li>
+					<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug page=thread_current_page|add:-1 %}">&laquo;</a></li>
 				{% endif %}
 				{% for i in thread_pages %}
 					{% if i == thread_current_page %}
@@ -45,11 +45,11 @@
 					{% else %}
 						<li>
 					{% endif %}
-						<a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=i %}">{{ i }}</a>
+						<a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug page=i %}">{{ i }}</a>
 					</li>
 				{% endfor %}
 				{% if thread_current_page|add:1 <= thread_pages|last %}
-					<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:1 %}">&raquo;</a></li>
+					<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug page=thread_current_page|add:1 %}">&raquo;</a></li>
 				{% endif %}
 			</ul>
 		</div>
@@ -60,18 +60,14 @@
 		<div class="panel-heading">
 			<div class="row">
 				<div class="col-xs-12 col-sm-6">
-					{% if post.title != "" %}
-						<a name="{{ post.local_id }}" href="{% url 'Forum.views.post' post_id=post.local_id %}">{{ post.title }}</a>
-					{% else %}
-						<a name="{{ post.local_id }}" href="{% url 'Forum.views.post' post_id=post.local_id %}">#{{ post.local_id }}</a>
-					{% endif %}
+					<a name="{{ post.local_id }}" href="{% url 'Forum.views.post' post_id=post.local_id %}">#{{ post.local_id }}</a>
 				</div>
 				<div class="col-sm-6 hidden-xs text-right">
 					<span>{{ post.publication_datetime|date:"m-d-Y H:i:s" }}</span>
 				</div>
 			</div>
 		</div>
-		<div class="panel-body post-body">
+		<div class="panel-body post">
 			<div class="row">
 				<div class="col-xs-12 col-sm-2 text-center post-info">
 					{% if post.user_is_admin %}
@@ -92,16 +88,15 @@
 					{% endif %}
 					Posts: {{ post.publisher.post_set.count }}
 				</div>
-				<div class="col-xs-12 col-sm-10 post-content">
-					{{ post.content|linebreaks }}
-				</div>
-			</div>
-		</div>
-		<div class="panel-footer">
-			<div class="row">
-				<div class="col-sm-6 hidden-xs">
+				<div class="col-xs-12 col-sm-10 post-body">
+					<div class="post-content">
+						{% if post.title != "" %}
+							<h4 class="post-title underlined-element">{{ post.title }}</h4>
+						{% endif %}
+						{{ post.content|linebreaks }}
+					</div>
 					{% if post.postedited_set.count %}
-						<small>Last edition by 
+						<small class="upperlined-element">Last edition by 
 							{% if post.postedited_set.last.user_is_administrator %}
 								<span class="text-warning">
 							{% elif post.postedited_set.last.user_is_moderator %}
@@ -115,11 +110,42 @@
 						 </small>
 					{% endif %}
 				</div>
-				<div class="col-xs-12 col-sm-6 text-right">
-					<div class="btn-group text-left">
-						{% if user.is_authenticated %}
+			</div>
+		</div>
+		<div class="panel-footer">
+			<div class="row">
+				{% if thread.forum.allow_up_votes or thread.forum.allow_down_votes %}
+					<div class="col-xs-5 col-sm-6" style="padding-right:0px;">
+						<div class="btn-group">
+							{% if user.is_authenticated and thread.forum.allow_up_votes %}
+								{% if post.vote and post.vote.type == "Up" %}
+									<button type="button" class="upvote-btn btn btn-sm btn-default active" post-id="{{ post.local_id }}"><span class="glyphicon glyphicon-thumbs-up"></span></button>
+								{% else %}
+									<button type="button" class="upvote-btn btn btn-sm btn-default" post-id="{{ post.local_id }}"><span class="glyphicon glyphicon-thumbs-up"></span></button>
+								{% endif %}
+							{% endif %}
+							{% if user.is_authenticated and thread.forum.allow_down_votes %}
+								{% if post.vote and post.vote.type == "Down" %}
+									<button type="button" class="downvote-btn btn btn-sm btn-default active" post-id="{{ post.local_id }}"><span class="glyphicon glyphicon-thumbs-down"></span></button>
+								{% else %}
+									<button type="button" class="downvote-btn btn btn-sm btn-default" post-id="{{ post.local_id }}"><span class="glyphicon glyphicon-thumbs-down"></span></button>
+								{% endif %}
+							{% endif %}
+							{% if post.score > 0 %}
+								<button type="button" class="score-btn btn btn-sm btn-success active" post-id="{{ post.local_id }}">{{ post.score }}</button>
+							{% elif post.score < 0 %}
+								<button type="button" class="score-btn btn btn-sm btn-danger active" post-id="{{ post.local_id }}">{{ post.score }}</button>
+							{% else %}
+								<button type="button" class="score-btn btn btn-sm btn-default active" post-id="{{ post.local_id }}">{{ post.score }}</button>
+							{% endif %}
+						</div>
+					</div>
+				{% endif %}
+				{% if user.is_authenticated %}
+					<div class="col-xs-7 col-sm-6 text-right" style="padding-left:0px;">
+						<div class="btn-group text-left">
 							{% if can_post %}
-								<a class="btn btn-sm btn-default" href="{% url 'Forum.views.replyThread' forum_id=thread.forum.local_id thread_id=thread|slugify %}"><span class="glyphicon glyphicon-comment"></span><span class="hidden-xs"> Reply</span></a>
+								<a class="btn btn-sm btn-default" href="{% url 'Forum.views.replyThread' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug %}"><span class="glyphicon glyphicon-comment"></span><span class="hidden-xs"> Reply</span></a>
 							{% endif %}
 							{% if user == post.publisher %}
 								<a class="btn btn-sm btn-default" href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-pencil"></span><span class="hidden-xs"> Edit</span></a>
@@ -142,13 +168,13 @@
 										</li>
 									{% endif %}
 									<li>
-										<a href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-warning-sign"></span> Report</a>
+										<a href="{% url 'Forum.views.reportPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-warning-sign"></span> Report</a>
 									</li>
 								</ul>
 							</div>
-						{% endif %}
+						</div>
 					</div>
-				</div>
+				{% endif %}
 			</div>
 		</div>
 	</div>
@@ -158,7 +184,7 @@
 	<div class="col-xs-12 text-right">
 		<ul class="pagination pagination-bottom">
 			{% if thread_current_page|add:-1 >= thread_pages|first %}
-				<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:-1 %}">&laquo;</a></li>
+				<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug page=thread_current_page|add:-1 %}">&laquo;</a></li>
 			{% endif %}
 			{% for i in thread_pages %}
 				{% if i == thread_current_page %}
@@ -166,11 +192,11 @@
 				{% else %}
 					<li>
 				{% endif %}
-					<a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=i %}">{{ i }}</a>
+					<a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug page=i %}">{{ i }}</a>
 				</li>
 			{% endfor %}
 			{% if thread_current_page|add:1 <= thread_pages|last %}
-				<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread|slugify page=thread_current_page|add:1 %}">&raquo;</a></li>
+				<li><a href="{% url 'Forum.views.thread' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug page=thread_current_page|add:1 %}">&raquo;</a></li>
 			{% endif %}
 		</ul>
 	</div>
@@ -185,8 +211,6 @@
 			url: "{% url 'Forum.views.forum' forum_id=forum_id %}"+"post/"+post_id+"/quote/",
 		})
 		.done(function(data) {
-			console.log(data);
-			console.log(button.html());
 			button.removeClass("glyphicon-minus");
 			button.removeClass("glyphicon-plus");
 			if (data.action == "added") {
@@ -194,6 +218,62 @@
 			}
 			else if (data.action == "removed") {
 				button.addClass("glyphicon-plus");
+			}
+		})
+	});
+	$(".upvote-btn").click(function() {
+		var post_id = $(this).attr("post-id");
+		$.ajax({
+			url: "{% url 'Forum.views.forum' forum_id=forum_id %}"+"post/"+post_id+"/vote/up/",
+		})
+		.done(function(data) {
+			var upvote_btn = $(".upvote-btn[post-id='"+post_id+"']")
+			var downvote_btn = $(".downvote-btn[post-id='"+post_id+"']")
+			var score_btn = $(".score-btn[post-id='"+post_id+"']")
+			upvote_btn.removeClass("active");
+			downvote_btn.removeClass("active");
+			score_btn.removeClass("btn-success");
+			score_btn.removeClass("btn-danger");
+			if (data.action == "added") {
+				upvote_btn.addClass("active");
+			}
+			score_btn.html(data.score);
+			if (data.score > 0) {
+				score_btn.addClass("btn-success");
+			}
+			else if (data.score < 0) {
+				score_btn.addClass("btn-danger");
+			}
+			else {
+				score_btn.addClass("btn-default");
+			}
+		})
+	});
+	$(".downvote-btn").click(function() {
+		var post_id = $(this).attr("post-id");
+		$.ajax({
+			url: "{% url 'Forum.views.forum' forum_id=forum_id %}"+"post/"+post_id+"/vote/down/",
+		})
+		.done(function(data) {
+			var upvote_btn = $(".upvote-btn[post-id='"+post_id+"']")
+			var downvote_btn = $(".downvote-btn[post-id='"+post_id+"']")
+			var score_btn = $(".score-btn[post-id='"+post_id+"']")
+			upvote_btn.removeClass("active");
+			downvote_btn.removeClass("active");
+			score_btn.removeClass("btn-success");
+			score_btn.removeClass("btn-danger");
+			if (data.action == "added") {
+				downvote_btn.addClass("active");
+			}
+			score_btn.html(data.score);
+			if (data.score > 0) {
+				score_btn.addClass("btn-success");
+			}
+			else if (data.score < 0) {
+				score_btn.addClass("btn-danger");
+			}
+			else {
+				score_btn.addClass("btn-default");
 			}
 		})
 	});

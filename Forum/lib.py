@@ -1,4 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import redirect
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.http import Http404
@@ -29,15 +30,21 @@ def get_post_instance(forum, id):
 	except ObjectDoesNotExist:
 		return None
 
+def get_last_visit_instance(user, thread):
+	try:
+		return LastUserVisit.objects.get(user=user, thread=thread)
+	except ObjectDoesNotExist:
+		return None
+
 def get_quote_instance(user, post):
 	try:
 		return Quote.objects.get(user=user, post=post)
 	except ObjectDoesNotExist:
 		return None
 
-def get_last_visit_instance(user, thread):
+def get_vote_instance(user, post):
 	try:
-		return LastUserVisit.objects.get(user=user, thread=thread)
+		return Vote.objects.get(user=user, post=post)
 	except ObjectDoesNotExist:
 		return None
 
@@ -90,3 +97,7 @@ def check_user_is_spamming(user):
 	except ObjectDoesNotExist:
 		pass
 	return
+def check_slug(instace, slug):
+	if (instace.slug() == slug):
+		return True
+	return False

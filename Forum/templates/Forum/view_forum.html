@@ -11,7 +11,7 @@
 				{% if l == forum.forum.main_forum %}
 					<a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id %}">
 				{% else %}
-					<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=l|slugify %}">
+					<a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=l.local_id subforum_slug=l.slug subforum_slug=l.slug %}">
 				{% endif %}
 					{{ l.name }}
 				</a>
@@ -30,7 +30,7 @@
 					</div>
 					{% if is_admin %}
 						<div class="col-xs-6 text-right">
-							<a class="btn btn-default btn-sm pull-right" href="{% url 'Forum.views.newSubforum' forum_id=forum.forum.local_id subforum_id=forum|slugify %}">New Subforum</a>
+							<a class="btn btn-default btn-sm pull-right" href="{% url 'Forum.views.newSubforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug %}">New Subforum</a>
 						</div>
 					{% endif %}  
 				</div>
@@ -47,7 +47,7 @@
 								{% endif %}
 							</div>
 							<div class="col-xs-9 col-sm-6 col-md-6">
-								<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=subforum|slugify %}">
+								<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=subforum.local_id subforum_slug=subforum.slug %}">
 									<h4 class="list-group-item-heading">{{ subforum.name }}</h4>
 								</a>
 								<p class="list-group-item-text">{{ subforum.description|linebreaks }}</p>
@@ -57,13 +57,14 @@
 							</div>
 							<div class="col-sm-4 col-lg-3 hidden-xs" style="white-space:nowrap;overflow:hidden;text-overflow: ellipsis;">
 								{% if subforum.getLastModifiedThread %}
-									<a href="{% url 'Forum.views.thread' forum_id=forum.forum.local_id thread_id=subforum.getLastModifiedThread|slugify %}">{{ subforum.getLastModifiedThread.name }}</a><br>
-									By {{ subforum.getLastModifiedThread.getLastModifiedPost.publisher.username }}<br>
-									{{ subforum.getLastModifiedThread.getLastModifiedPost.publication_datetime|date:"m-d-Y, H:i" }}
+									<a href="{% url 'Forum.views.firstPostUnreadThread' forum_id=forum_id thread_id=subforum.getLastModifiedThread.local_id thread_slug=subforum.getLastModifiedThread.slug %}"><span class="glyphicon glyphicon-collapse-down" title="Go to first unread post"></span></a>
+									<a href="{% url 'Forum.views.thread' forum_id=forum.forum.local_id thread_id=subforum.getLastModifiedThread.local_id thread_slug=subforum.getLastModifiedThread.slug %}">{{ subforum.getLastModifiedThread.name }}</a><br>
+									By {{ subforum.getLastModifiedThread.getLastPublishedPost.publisher.username }}<br>
+									{{ subforum.getLastModifiedThread.getLastPublishedPost.publication_datetime|date:"m-d-Y, H:i" }}
 								{% else %}
 									This subforum is empty.<br>
 									{% if can_create_thread %}
-									<a href="{% url 'Forum.views.newThread' forum_id=forum.forum.local_id subforum_id=subforum|slugify %}">Be the first one to post!</a><br>
+									<a href="{% url 'Forum.views.newThread' forum_id=forum.forum.local_id subforum_id=subforum.local_id subforum_slug=subforum.slug %}">Be the first one to post!</a><br>
 									{% endif %}
 								{% endif %}
 							</div>
@@ -86,7 +87,7 @@
 						{% if forum == forum.forum.main_forum %}
 							<a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id page=i  %}">
 						{% else %}
-							<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum|slugify page=i %}">
+							<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=i %}">
 						{% endif %}
 						{{ i }}</a>
 					</li>
@@ -102,7 +103,7 @@
 				</div>
 				{% if can_create_thread %}
 					<div class="col-xs-6 text-right">
-						<a class="btn btn-primary btn-sm pull-right" href="{% url 'Forum.views.newThread' forum_id=forum.forum.local_id subforum_id=forum|slugify %}">New Thread</a>
+						<a class="btn btn-primary btn-sm pull-right" href="{% url 'Forum.views.newThread' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug %}">New Thread</a>
 					</div>
 				{% endif %}  
 			</div>
@@ -119,9 +120,10 @@
 								{% endif %}
 						</div>
 						<div class="col-xs-9 col-sm-6 col-md-6">
-							<a href="{% url 'Forum.views.thread' forum_id=forum.forum.local_id thread_id=thread|slugify %}">
-								<h4 class="list-group-item-heading">{{ thread.name }}</h4>
-							</a>
+							<h4 class="list-group-item-heading">
+								<a href="{% url 'Forum.views.firstPostUnreadThread' forum_id=forum_id thread_id=thread.local_id thread_slug=thread.slug %}"><span class="glyphicon glyphicon-collapse-down" title="Go to first unread post"></span></a>
+								<a href="{% url 'Forum.views.thread' forum_id=forum.forum.local_id thread_id=thread.local_id thread_slug=thread.slug %}">{{ thread.name }}</a>
+							</h4>
 							<p class="list-group-item-text">Started by {{ thread.creator }}</p>
 						</div>
 						<div class="col-lg-2 visible-lg">
@@ -129,8 +131,8 @@
 							Views: {{ thread.visit_counter }}
 						</div>
 						<div class="col-sm-4 col-lg-3 hidden-xs thread-info">
-							{{ thread.getLastModifiedPost.publisher.username }}<br>
-							{{ thread.getLastModifiedPost.publication_datetime|date:"m-d-Y, H:i" }}
+							{{ thread.getLastPublishedPost.publisher.username }} <a href="{% url 'Forum.views.post' forum_id=forum_id post_id=thread.getLastPublishedPost.local_id %}"title="Go to last post"><span class="glyphicon glyphicon-share" title="Go to last post"></span></a><br>
+							{{ thread.getLastPublishedPost.publication_datetime|date:"m-d-Y, H:i" }}
 						</div>
 					</div>
 				</li>
@@ -139,7 +141,7 @@
 				<p class="list-group-item-text text-center">
 					This subforum is empty.<br>
 					{% if can_create_thread %}
-					<a href="{% url 'Forum.views.newThread' forum_id=forum.forum.local_id subforum_id=forum|slugify %}">Be the first one to post!</a><br>
+					<a href="{% url 'Forum.views.newThread' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug %}">Be the first one to post!</a><br>
 					{% endif %}
 				</p>
 			</li>
@@ -158,7 +160,7 @@
 						{% if forum == forum.forum.main_forum %}
 							<a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id page=i  %}">
 						{% else %}
-							<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum|slugify page=i %}">
+							<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=i %}">
 						{% endif %}
 						{{ i }}</a>
 					</li>

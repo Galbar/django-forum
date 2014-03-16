@@ -25,7 +25,3 @@ Template context variables:
   submit_btn_text: Text on the submit form button
 """
 FORM_TEMPLATE = 'Forum/form.html'
-
-# Display config
-POSTS_PER_PAGE = 10
-THREADS_PER_PAGE = 20

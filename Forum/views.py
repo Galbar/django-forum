@@ -30,13 +30,20 @@ def logout(request, forum_id):
 	raise Http404
 
 def forum(request, forum_id, page=1, template=MAIN_FORUM_TEMPLATE):
-	return subforum(request, forum_id, 0, page, template=template)
+	forum = get_forum_instance(forum_id)
+	subforum_slug = get_subforum_instance(forum, 0).slug()
+	return subforum(request, forum_id, 0, subforum_slug, page, template=template)
 
-def subforum(request, forum_id, subforum_id, page=1, template=SUBFORUM_TEMPLATE):
+def subforum(request, forum_id, subforum_id, subforum_slug, page=1, template=SUBFORUM_TEMPLATE):
 	forum = get_forum_instance(forum_id)
 	if forum:
 		subforum = get_subforum_instance(forum, subforum_id)
 		if subforum:
+			if not check_slug(subforum, subforum_slug):
+				if page == 1:
+					return redirect('Forum.views.subforum', forum_id=forum_id, subforum_id=subforum_id, subforum_slug=subforum.slug())
+				else:
+					return redirect('Forum.views.subforum', forum_id=forum_id, subforum_id=subforum_id, subforum_slug=subforum.slug(), page=page)
 			if user_has_permission(subforum.view_permission, request.user):
 				is_mod = user_has_permission(subforum.mod_permission, request.user)
 				can_create_thread = user_has_permission(subforum.create_thread_permission, request.user)
@@ -51,13 +58,13 @@ def subforum(request, forum_id, subforum_id, page=1, template=SUBFORUM_TEMPLATE)
 						th.is_visited = th.isVisited(request.user)
 						thread_list.append(th)
 				page = int(page) -1
-				subforum_num_pages = int(ceil(float(len(thread_list))/float(THREADS_PER_PAGE)))
+				subforum_num_pages = int(ceil(float(len(thread_list))/float(forum.threads_per_page)))
 				if (subforum_num_pages > page and 0 <= page) or subforum_num_pages == 0:
 					c = RequestContext(request, {
 											'forum_id':forum_id,
 											'forum': subforum,
 											'subforum_list':subforum_list,
-											'thread_list':thread_list[(page*THREADS_PER_PAGE):(page*THREADS_PER_PAGE)+THREADS_PER_PAGE],
+											'thread_list':thread_list[(page*forum.threads_per_page):(page*forum.threads_per_page)+forum.threads_per_page],
 											'subforum_current_page':page+1,
 											'subforum_pages':range(max(page-1, 1), min(page+4, subforum_num_pages+1)),
 											'is_admin':user_has_permission(forum.admin_permission, request.user),
@@ -74,12 +81,14 @@ def subforum(request, forum_id, subforum_id, page=1, template=SUBFORUM_TEMPLATE)
 	raise Http404
 
 @login_required
-def newSubforum(request, forum_id, subforum_id, template=FORM_TEMPLATE):
+def newSubforum(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPLATE):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
 	if forum:
 		subforum = get_subforum_instance(forum, subforum_id)
 		if subforum:
+			if not check_slug(subforum, subforum_slug):
+				return redirect('Forum.views.newSubforum', forum_id=forum_id, subforum_id=subforum_id, subforum_slug=subforum.slug())
 			if user_has_permission(forum.admin_permission, request.user):
 				if request.method == 'POST':
 					new_subforum_form = FormSubforum(request.POST)
@@ -90,7 +99,7 @@ def newSubforum(request, forum_id, subforum_id, template=FORM_TEMPLATE):
 						new_subforum.forum = forum
 						new_subforum.creator = request.user
 						new_subforum.save()
-						return redirect('subforum', forum_id=forum_id, subforum_id=slugify(new_subforum.__unicode__()))
+						return redirect('subforum', forum_id=forum_id, subforum_id=new_subforum.local_id, subforum_slug=new_subforum.slug())
 				else:
 					new_subforum = Subforum(
 							view_permission = subforum.view_permission,
@@ -115,11 +124,16 @@ def newSubforum(request, forum_id, subforum_id, template=FORM_TEMPLATE):
 	
 	raise Http404
 
-def thread(request, forum_id, thread_id, page=1, template=THREAD_TEMPLATE):
+def thread(request, forum_id, thread_id, thread_slug, page=1, template=THREAD_TEMPLATE):
 	forum = get_forum_instance(forum_id)
 	if forum:
 		thread = get_thread_instance(forum, thread_id)
 		if thread:
+			if not check_slug(thread, thread_slug):
+				if page == 1:
+					return redirect('Forum.views.thread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
+				else:
+					return redirect('Forum.views.thread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug(), page=page)
 			subforum = thread.parent
 			if user_has_permission(subforum.view_permission, request.user):
 				is_mod = user_has_permission(subforum.mod_permission, request.user)
@@ -132,9 +146,10 @@ def thread(request, forum_id, thread_id, page=1, template=THREAD_TEMPLATE):
 						pt.user_is_admin = user_has_permission(forum.admin_permission, pt.publisher)
 						if request.user.is_authenticated():
 							pt.is_quoted = get_quote_instance(request.user, pt)
+							pt.vote = get_vote_instance(request.user, pt)
 						post_list.append(pt)
 				page = int(page) -1
-				thread_num_pages = int(ceil(float(len(post_list))/float(POSTS_PER_PAGE)))
+				thread_num_pages = int(ceil(float(len(post_list))/float(forum.posts_per_page)))
 				if thread_num_pages > page and 0 <= page:
 					set_visit(thread, request.user)
 					thread.visit_counter += 1
@@ -142,7 +157,7 @@ def thread(request, forum_id, thread_id, page=1, template=THREAD_TEMPLATE):
 					c = RequestContext(request, {
 											'forum_id':forum_id,
 											'thread': thread,
-											'post_list':post_list[(page*POSTS_PER_PAGE):(page*POSTS_PER_PAGE)+POSTS_PER_PAGE],
+											'post_list':post_list[(page*forum.posts_per_page):(page*forum.posts_per_page)+forum.posts_per_page],
 											'thread_current_page':page+1,
 											'thread_pages':range(max(page-1, 1), min(page+4, thread_num_pages+1)),
 											'is_moderator': is_mod,
@@ -157,43 +172,50 @@ def thread(request, forum_id, thread_id, page=1, template=THREAD_TEMPLATE):
 				return render(request, CANT_VIEW_CONTENT, c)
 	raise Http404
 
-def threadLastPage(request, forum_id, thread_id):
+def threadLastPage(request, forum_id, thread_id, thread_slug):
 	forum = get_forum_instance(forum_id)
 	if forum:
 		thread = get_thread_instance(forum, thread_id)
 		if thread:
+			if not check_slug(thread, thread_slug):
+				return redirect('Forum.views.threadLastPage', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
 			subforum = thread.parent
 			post_list = []
 			unfiltered_post_list = thread.post_set.order_by('local_id')
 			for pt in unfiltered_post_list:
 				if (not pt.hidden) or user_has_permission(subforum.mod_permission, request.user):
 					post_list.append(pt)
-			thread_num_pages = int(ceil(float(len(post_list))/float(POSTS_PER_PAGE)))
+			thread_num_pages = int(ceil(float(len(post_list))/float(forum.posts_per_page)))
 			page = thread_num_pages
-			return redirect('Forum.views.thread', forum_id=forum_id, thread_id=slugify(thread.__unicode__()), page=page)
+			return redirect('Forum.views.thread', forum_id=forum_id, thread_id=thread.local_id, thread_slug=thread.slug(), page=page)
 	raise Http404
 
 @login_required
-def lastPostReadThread(request, forum_id, thread_id):
+def firstPostUnreadThread(request, forum_id, thread_id, thread_slug):
 	forum = get_forum_instance(forum_id)
 	if forum:
 		thread = get_thread_instance(forum, thread_id)
 		if thread:
+			if not check_slug(thread, thread_slug):
+				return redirect('Forum.views.firstPostUnreadThread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
 			last_visit = get_last_visit_instance(request.user, thread)
 			if last_visit:
 				last_post = Post.objects.order_by('publication_datetime').filter(publication_datetime__gt=last_visit.datetime).first()
 				if last_post:
 					return redirect('Forum.views.post', forum_id=forum_id, post_id=last_post.local_id)
-			return redirect('Forum.views.thread', forum_id=forum.local_id, thread_id=thread_id)
+			print("shiet")
+			return redirect('Forum.views.post', forum_id=forum.local_id, post_id=thread.getLastPublishedPost().local_id)
 	raise Http404
 
 @login_required
-def newThread(request, forum_id, subforum_id, template=FORM_TEMPLATE):
+def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPLATE):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
 	if forum:
 		subforum = get_subforum_instance(forum, subforum_id)
 		if subforum:
+			if not check_slug(subforum, subforum_slug):
+				return redirect('Forum.views.newThread', forum_id=forum_id, subforum_id=subforum_id, subforum_slug=subforum.slug())
 			if user_has_permission(subforum.create_thread_permission, request.user):
 				if request.method == 'POST':
 					new_post = Post(publisher=request.user)
@@ -215,7 +237,7 @@ def newThread(request, forum_id, subforum_id, template=FORM_TEMPLATE):
 						new_post.forum=forum
 						new_post.thread=new_thread
 						new_post.save()
-						return redirect('thread', forum_id=forum_id, thread_id=slugify(new_thread.__unicode__()))
+						return redirect('Forum.views.thread', forum_id=forum_id, thread_id=new_thread.local_id, thread_slug=new_thread.slug())
 				else:
 					new_post = Post()
 					if user_has_permission(subforum.mod_permission, request.user):
@@ -239,12 +261,14 @@ def newThread(request, forum_id, subforum_id, template=FORM_TEMPLATE):
 	raise Http404
 
 @login_required
-def replyThread(request, forum_id, thread_id, template=FORM_TEMPLATE):
+def replyThread(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLATE):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
 	if forum:
 		thread = get_thread_instance(forum, thread_id)
 		if thread:
+			if not check_slug(thread, thread_slug):
+				return redirect('Forum.views.replythread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
 			if user_has_permission(thread.parent.reply_thread_permission, request.user):
 				if request.method == 'POST':
 					new_post = Post(publisher=request.user)
@@ -260,13 +284,14 @@ def replyThread(request, forum_id, thread_id, template=FORM_TEMPLATE):
 						new_post.save()
 						thread.last_publication_datetime=new_post.publication_datetime
 						thread.save()
-						return redirect('thread_last_page', forum_id=forum_id, thread_id=slugify(thread.__unicode__()))
+						return redirect('thread_last_page', forum_id=forum_id, thread_id=thread.local_id, thread_slug=thread.slug())
 				else:
 					new_post = Post()
 					quotes_text = ""
 					quote_list = Quote.objects.filter(user=request.user, thread=thread)
 					for quote in quote_list:
 						quotes_text += "[quote="+quote.post.publisher.username+"]"+quote.post.content+"[/quote]\n\n"
+						quote.delete()
 					new_post.content = quotes_text
 					if user_has_permission(thread.parent.mod_permission, request.user):
 						new_post_form = FormPost_Mod(instance=new_post)
@@ -303,8 +328,8 @@ def post(request, forum_id, post_id):
 						break
 					num += 1
 			if found:
-				page = (num/POSTS_PER_PAGE)+1
-				return redirect('Forum.views.thread', forum_id=forum_id, thread_id=slugify(post.thread.__unicode__()), page=page, post_id=post_id)
+				page = (num/forum.posts_per_page)+1
+				return redirect('Forum.views.thread', forum_id=forum_id, thread_id=post.thread.local_id, thread_slug=post.thread.slug(), page=page, post_id=post_id)
 	raise Http404
 
 @login_required
@@ -313,7 +338,8 @@ def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 	forum = get_forum_instance(forum_id)
 	if forum:
 		post = get_post_instance(forum, post_id)
-		if post:
+		if post and user_has_permission(post.thread.parent.view_permission, request.user):
+			post_old_title = post.title
 			post_old_content = post.content
 			if request.method == 'POST':
 				if user_has_permission(post.thread.parent.mod_permission, request.user):
@@ -326,6 +352,8 @@ def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 						user=request.user,
 						datetime=datetime.now(),
 						reason='',
+						old_title=post_old_title,
+						new_title=post.title,
 						old_content=post_old_content,
 						new_content=post.content,
 						user_is_moderator = user_has_permission(post.thread.parent.mod_permission, request.user),
@@ -336,7 +364,7 @@ def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 						post.thread.name = post.title
 						post.thread.save()
 					post_edited.save()
-					return redirect('thread', forum_id=forum_id, thread_id=slugify(post.thread.__unicode__()))
+					return redirect('Forum.views.thread', forum_id=forum_id, thread_id=post.thread.local_id, thread_slug=post.thread.slug())
 			else:
 				if user_has_permission(post.thread.parent.mod_permission, request.user):
 					edit_post_form = FormPost_Mod(instance=post)
@@ -363,7 +391,7 @@ def reportPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 	forum = get_forum_instance(forum_id)
 	if forum:
 		post = get_post_instance(forum, post_id)
-		if post:
+		if post and user_has_permission(post.thread.parent.view_permission, request.user):
 			if request.method == 'POST':
 				report_post_form = FormReportPost(request.POST)
 				if report_post_form.is_valid():
@@ -371,7 +399,7 @@ def reportPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 					report_post.user = request.user
 					report_post.post = post
 					report_post.save()
-					return redirect('thread', forum_id=forum_id, thread_id=slugify(post.thread.__unicode__()))
+					return redirect('Forum.views.thread', forum_id=forum_id, thread_id=post.thread.local_id, thread_slug=post.thread.slug())
 			else:
 				report_post_form = FormReportPost()
 			c = RequestContext(request, {
@@ -389,7 +417,7 @@ def quotePost(request, forum_id, post_id):
 	forum = get_forum_instance(forum_id)
 	if forum:
 		post = get_post_instance(forum, post_id)
-		if post:
+		if post and user_has_permission(post.thread.parent.view_permission, request.user):
 			quote = get_quote_instance(request.user, post)
 			response_data = {}
 			if quote:
@@ -399,3 +427,50 @@ def quotePost(request, forum_id, post_id):
 				Quote(user=request.user, post=post, thread=post.thread).save()
 				response_data['action'] = 'added'
 			return HttpResponse(json.dumps(response_data), content_type="application/json")
+	raise Http404
+
+@login_required
+def votePostUp(request, forum_id, post_id):
+	forum = get_forum_instance(forum_id)
+	if forum and forum.allow_up_votes:
+		post = get_post_instance(forum, post_id)
+		if post and user_has_permission(post.thread.parent.view_permission, request.user):
+			vote = get_vote_instance(request.user, post)
+			response_data = {}
+			if vote:
+				if vote.type == "Up":
+					vote.delete()
+					response_data['action'] = 'removed'
+				else:
+					vote.type = "Up"
+					vote.save()
+					response_data['action'] = 'added'
+			else:
+				Vote(user=request.user, post=post, type="Up").save()
+				response_data['action'] = 'added'
+			response_data['score'] = post.score()
+			return HttpResponse(json.dumps(response_data), content_type="application/json")
+	raise Http404
+
+@login_required
+def votePostDown(request, forum_id, post_id):
+	forum = get_forum_instance(forum_id)
+	if forum and forum.allow_down_votes:
+		post = get_post_instance(forum, post_id)
+		if post and user_has_permission(post.thread.parent.view_permission, request.user):
+			vote = get_vote_instance(request.user, post)
+			response_data = {}
+			if vote:
+				if vote.type == "Down":
+					vote.delete()
+					response_data['action'] = 'removed'
+				elif vote.type == "Up":
+					vote.type = "Down"
+					vote.save()
+					response_data['action'] = 'added'
+			else:
+				Vote(user=request.user, post=post, type="Down").save()
+				response_data['action'] = 'added'
+			response_data['score'] = post.score()
+			return HttpResponse(json.dumps(response_data), content_type="application/json")
+	raise Http404

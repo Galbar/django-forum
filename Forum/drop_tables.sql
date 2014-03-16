@@ -1,0 +1,11 @@
+drop table Forum_forum;
+drop table Forum_subforum;
+drop table Forum_thread;
+drop table Forum_poll;
+drop table Forum_polloption;
+drop table Forum_post;
+drop table Forum_postreported;
+drop table Forum_postedited;
+drop table Forum_lastuservisit;
+drop table Forum_quote;
+drop table Forum_vote;
