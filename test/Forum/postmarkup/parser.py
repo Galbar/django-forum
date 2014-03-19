@@ -410,7 +410,7 @@ class ImgTag(TagBase):
         
     def open(self, parser, params, *args):
         if params.strip():
-            self.auto_close = True            
+            self.auto_close = False
         super(ImgTag, self).open(parser, params, *args)
 
     def render_open(self, parser, node_index):
@@ -419,11 +419,16 @@ class ImgTag(TagBase):
         self.skip_contents(parser)
 
         # Validate url to avoid any XSS attacks
+        params_found = False
         if self.params:
-            url = self.params.strip()
-        else:
-            url = strip_bbcode(contents)
-            
+            params = self.params.strip()
+            patt = re.compile(r'(?P<width>\d+)(x(?P<height>\d+))?')
+            match = patt.findall(params)
+            img_width = match[0][0]
+            img_height = match[0][2]
+            params_found = True
+
+        url = strip_bbcode(contents)
         url = url.replace(u'"', u"%22").strip()
         if not url:
             return u''
@@ -433,7 +438,8 @@ class ImgTag(TagBase):
             scheme, netloc, path, params, query, fragment = urlparse(url)
         if scheme.lower() not in (u'http', u'https', u'ftp'):
             return u''
-        
+        if params_found:
+            return u'<img src="%s" width="%s" height="%s"></img>' % (PostMarkup.standard_replace_no_break(url), img_width, img_height)
         return u'<img src="%s"></img>' % PostMarkup.standard_replace_no_break(url)
 
 
