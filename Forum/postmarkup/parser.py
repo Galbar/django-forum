@@ -419,16 +419,18 @@ class ImgTag(TagBase):
         self.skip_contents(parser)
 
         # Validate url to avoid any XSS attacks
+        url = strip_bbcode(contents)
         params_found = False
         if self.params:
             params = self.params.strip()
             patt = re.compile(r'(?P<width>\d+)(x(?P<height>\d+))?')
             match = patt.findall(params)
-            img_width = match[0][0]
-            img_height = match[0][2]
+            if match:
+                img_width = match[0][0]
+                img_height = match[0][2]
+            else:
+                url = params
             params_found = True
-
-        url = strip_bbcode(contents)
         url = url.replace(u'"', u"%22").strip()
         if not url:
             return u''
