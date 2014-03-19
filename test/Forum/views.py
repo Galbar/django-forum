@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from django.http import Http404, HttpResponse
+from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as lgout
 from django.template.defaultfilters import slugify
@@ -81,6 +82,7 @@ def subforum(request, forum_id, subforum_id, subforum_slug, page=1, template=SUB
 	raise Http404
 
 @login_required
+@csrf_protect
 def newSubforum(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPLATE):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
@@ -208,6 +210,7 @@ def firstPostUnreadThread(request, forum_id, thread_id, thread_slug):
 	raise Http404
 
 @login_required
+@csrf_protect
 def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPLATE):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
@@ -261,6 +264,7 @@ def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPL
 	raise Http404
 
 @login_required
+@csrf_protect
 def replyThread(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLATE):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
@@ -333,6 +337,7 @@ def post(request, forum_id, post_id):
 	raise Http404
 
 @login_required
+@csrf_protect
 def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
@@ -386,6 +391,7 @@ def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 	raise Http404
 
 @login_required
+@csrf_protect
 def reportPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)

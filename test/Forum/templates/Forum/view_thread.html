@@ -1,4 +1,5 @@
 {% extends 'Forum/index.html' %}
+{% load forum_bbcode %}
 {% block head_title %}
 {{ thread.forum.name }} · {{ thread.parent.name }} · {{ thread.name }}
 {% endblock %}
@@ -93,7 +94,7 @@
 						{% if post.title != "" %}
 							<h4 class="post-title underlined-element">{{ post.title }}</h4>
 						{% endif %}
-						{{ post.content|linebreaks }}
+						{{ post.content|bbcode }}
 					</div>
 					{% if post.postedited_set.count %}
 						<small class="upperlined-element">Last edition by 
@@ -276,6 +277,9 @@
 				score_btn.addClass("btn-default");
 			}
 		})
+	});
+	$(".spoiler-btn").click(function() {
+		$(this).next(".spoiler-body").collapse("toggle");
 	});
 </script>
 {% endblock %}
