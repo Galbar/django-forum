@@ -415,7 +415,7 @@ class ImgTag(TagBase):
 
     def render_open(self, parser, node_index):
 
-        contents = self.get_contents(parser)
+        contents = _escape_no_breaks(self.get_contents(parser))
         self.skip_contents(parser)
 
         # Validate url to avoid any XSS attacks
@@ -428,9 +428,9 @@ class ImgTag(TagBase):
             if match:
                 img_width = match[0][0]
                 img_height = match[0][2]
+                params_found = True
             else:
                 url = params
-            params_found = True
         url = url.replace(u'"', u"%22").strip()
         if not url:
             return u''
