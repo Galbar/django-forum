@@ -312,6 +312,36 @@ class LinkTag(TagBase):
             return u""
 
 
+class TableTag(TagBase):
+    """ By Alessio Linares """
+
+    def __init__(self, name, html_name, **kwargs):
+        """html_name -- the html tag to substitute."""
+        super(TableTag, self).__init__(name, strip_first_newline=True)
+        self.html_name = html_name
+
+
+    def render_open(self, parser, node_index):
+        tag_data = parser.tag_data
+        tag_key = u"TableTag.%s_nest_level" % self.html_name
+        nest_level = tag_data[tag_key] = tag_data.setdefault(tag_key, 0) + 1
+
+        if nest_level > 1:
+            return u""
+
+        return u"<%s>"%self.html_name
+
+    def render_close(self, parser, node_index):
+
+        tag_data = parser.tag_data
+        tag_key = u"TableTag.%s_nest_level"%self.html_name
+        tag_data[tag_key] -= 1
+
+        if tag_data[tag_key] > 0:
+            return u''
+
+        return u"</%s>"%self.html_name
+
 class QuoteTag(TagBase):
 
     def __init__(self, name, **kwargs):
@@ -676,10 +706,10 @@ def create(include=None,
     add_tag(SimpleTag, u'i', u'em')
     add_tag(SimpleTag, u'u', u'u')
     add_tag(SimpleTag, u's', u'strike')
-    add_tag(SimpleTag, u'table', u'table class="table"')
-    add_tag(SimpleTag, u'tr', u'tr')
-    add_tag(SimpleTag, u'td', u'td')
-    add_tag(SimpleTag, u'th', u'th')
+    add_tag(TableTag, u'table', u'table class="table"')
+    add_tag(TableTag, u'tr', u'tr')
+    add_tag(TableTag, u'td', u'td')
+    add_tag(TableTag, u'th', u'th')
 
     add_tag(LinkTag, u'link', **kwargs)
     add_tag(LinkTag, u'url', **kwargs)
