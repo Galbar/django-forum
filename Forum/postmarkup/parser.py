@@ -862,18 +862,20 @@ class _Parser(object):
 
 class PostMarkup(object):
 
-    standard_replace = MultiReplace({   u'<':u'&lt;',
-                                        u'>':u'&gt;',
-                                        u'&':u'&amp;',
+    standard_replace = MultiReplace({   #u'<':u'&lt;',
+                                        #u'>':u'&gt;',
+                                        #u'&':u'&amp;',
                                         u'\n':u'<br/>'})
 
-    standard_unreplace = MultiReplace({  u'&lt;':u'<',
-                                         u'&gt;':u'>',
-                                         u'&amp;':u'&'})
+    standard_unreplace = MultiReplace({  #u'&lt;':u'<',
+                                         #u'&gt;':u'>',
+                                         #u'&amp;':u'&',
+                                         })
 
-    standard_replace_no_break = MultiReplace({  u'<':u'&lt;',
-                                                u'>':u'&gt;',
-                                                u'&':u'&amp;',})
+    standard_replace_no_break = MultiReplace({  #u'<':u'&lt;',
+                                                #u'>':u'&gt;',
+                                                #u'&':u'&amp;',
+                                                })
 
     cosmetic_replace = MultiReplace({ u'--':u'&ndash;',
                                       u'---':u'&mdash;',
