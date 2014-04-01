@@ -33,7 +33,9 @@
 	</ol>
 	<div class="row">
 		<div class="col-xs-12 col-sm-6">
-
+			{% if is_moderator %}
+				<a class="btn btn-sm btn-default" href="{% url 'Forum.views.saveThreadSettings' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug %}">Thread Settings</a>
+			{% endif %}
 		</div>
 		<div class="col-sm-6 hidden-xs text-right">
 			<ul class="pagination pagination-top">
@@ -147,10 +149,6 @@
 						<div class="btn-group text-left">
 							{% if can_post %}
 								<a class="btn btn-sm btn-default" href="{% url 'Forum.views.replyThread' forum_id=thread.forum.local_id thread_id=thread.local_id thread_slug=thread.slug %}"><span class="glyphicon glyphicon-comment"></span><span class="hidden-xs"> Reply</span></a>
-							{% endif %}
-							{% if user == post.publisher %}
-								<a class="btn btn-sm btn-default" href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-pencil"></span><span class="hidden-xs"> Edit</span></a>
-							{% endif %}
 								<button class="btn btn-sm btn-default quote-btn" post-id="{{ post.local_id }}" >
 									{% if post.is_quoted %}
 										<span class="glyphicon glyphicon-minus"></span><span class="hidden-xs"> Quote</span>
@@ -158,6 +156,10 @@
 										<span class="glyphicon glyphicon-plus"></span><span class="hidden-xs"> Quote</span>
 									{% endif %}
 								</button>
+							{% endif %}
+							{% if user == post.publisher %}
+								<a class="btn btn-sm btn-default" href="{% url 'Forum.views.editPost' forum_id=thread.forum.local_id post_id=post.local_id %}"><span class="glyphicon glyphicon-pencil"></span><span class="hidden-xs"> Edit</span></a>
+							{% endif %}
 							<div class="btn-group">
 								<button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown">
 									<span class="caret"></span>

@@ -49,6 +49,9 @@ class Command(BaseCommand):
                 local_id=0,
                 name=f_name,
                 forum=f,
+                view_permission = "public",
+                create_thread_permission = "registered",
+                reply_thread_permission = "registered",
                 description="Main forum"
                 )
             sf.save()

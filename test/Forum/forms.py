@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django import forms
-from Forum.models import Post, Subforum, PostReported
+from Forum.models import *
 from django.core.validators import MaxLengthValidator
 
 class FormPost(forms.ModelForm):
@@ -26,3 +26,12 @@ class FormReportPost(forms.ModelForm):
     class Meta:
         model = PostReported
         fields = ['reason']
+
+class FormThreadSettings(forms.ModelForm):
+    class Meta:
+        model = Thread
+        fields = ['parent', 'hidden', 'closed', 'pinned']
+
+class FormUserLogin(forms.Form):
+    username = forms.CharField(required=True)
+    password = forms.CharField(widget=forms.PasswordInput, required=True)
