@@ -3,7 +3,7 @@ import json
 from django.http import Http404, HttpResponse
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout as lgout
+from django.contrib.auth import logout as lgout, authenticate, login as lgin
 from django.template.defaultfilters import slugify
 from django.shortcuts import render, redirect
 from datetime import datetime
@@ -15,12 +15,30 @@ from django.template import RequestContext
 from math import ceil
 
 # Create your views here.
-@login_required
-def login(request, forum_id):
-	forum = get_forum_instance(forum_id)
-	if forum:
-		return redirect('base_forum', forum_id=forum.local_id)
-	raise Http404
+def login(request, forum_id, template=FORM_TEMPLATE):
+	form = None
+	if request.method == 'POST':
+		form = FormUserLogin(request.POST)
+		if form.is_valid():
+			user = authenticate(username=form.data['username'], password=form.data['password'])
+			if user:
+				lgin(request, user)
+				forum = get_forum_instance(forum_id)
+				if forum:
+					return redirect('base_forum', forum_id=forum.local_id)
+				else:
+					raise Http404
+	if not form:
+		form = FormUserLogin()
+	c = RequestContext(request, {
+							'forum_id':forum_id,
+							'form': form,
+							'page_title': 'Login',
+							'title': 'Login',
+							'submit_btn_text': 'Login',
+						})
+	return render(request, template, c)
+
 
 @login_required
 def logout(request, forum_id):
@@ -137,8 +155,8 @@ def thread(request, forum_id, thread_id, thread_slug, page=1, template=THREAD_TE
 				else:
 					return redirect('Forum.views.thread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug(), page=page)
 			subforum = thread.parent
-			if user_has_permission(subforum.view_permission, request.user):
-				is_mod = user_has_permission(subforum.mod_permission, request.user)
+			is_mod = user_has_permission(subforum.mod_permission, request.user)
+			if user_has_permission(subforum.view_permission, request.user) and (not thread.hidden or is_mod):
 				can_post = user_has_permission(subforum.reply_thread_permission, request.user)
 				post_list = []
 				unfiltered_post_list = thread.post_set.order_by('local_id')
@@ -164,7 +182,7 @@ def thread(request, forum_id, thread_id, thread_slug, page=1, template=THREAD_TE
 											'thread_pages':range(max(page-1, 1), min(page+4, thread_num_pages+1)),
 											'is_moderator': is_mod,
 											'is_admin':user_has_permission(forum.admin_permission, request.user),
-											'can_post':can_post and request.user.is_authenticated(),
+											'can_post':can_post and request.user.is_authenticated() and (not thread.closed or is_mod),
 										})
 					return render(request, template, c)
 			else:
@@ -190,6 +208,34 @@ def threadLastPage(request, forum_id, thread_id, thread_slug):
 			thread_num_pages = int(ceil(float(len(post_list))/float(forum.posts_per_page)))
 			page = thread_num_pages
 			return redirect('Forum.views.thread', forum_id=forum_id, thread_id=thread.local_id, thread_slug=thread.slug(), page=page)
+	raise Http404
+
+
+@login_required
+@csrf_protect
+def saveThreadSettings(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLATE):
+	forum = get_forum_instance(forum_id)
+	if forum:
+		thread = get_thread_instance(forum, thread_id)
+		if thread:
+			if not check_slug(thread, thread_slug):
+				return redirect('Forum.views.saveThreadSettings', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
+			if user_has_permission(thread.parent.mod_permission, request.user):
+				if (request.method == 'POST'):
+					form = FormThreadSettings(request.POST, instance=thread)
+					if form.is_valid():
+						thread.save()
+						return redirect('Forum.views.thread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
+				else:
+					form = FormThreadSettings(instance=thread)
+					c = RequestContext(request, {
+										'forum_id':forum_id,
+										'form': form,
+										'page_title': 'Thread Settings',
+										'title': 'Thread Settings',
+										'submit_btn_text': 'Save',
+									})
+					return render(request, template, c)
 	raise Http404
 
 @login_required
@@ -270,7 +316,7 @@ def replyThread(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLAT
 	forum = get_forum_instance(forum_id)
 	if forum:
 		thread = get_thread_instance(forum, thread_id)
-		if thread:
+		if thread and (not thread.closed or user_has_permission(thread.parent.mod_permission, request.user)):
 			if not check_slug(thread, thread_slug):
 				return redirect('Forum.views.replythread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
 			if user_has_permission(thread.parent.reply_thread_permission, request.user):
@@ -288,7 +334,7 @@ def replyThread(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLAT
 						new_post.save()
 						thread.last_publication_datetime=new_post.publication_datetime
 						thread.save()
-						return redirect('thread_last_page', forum_id=forum_id, thread_id=thread.local_id, thread_slug=thread.slug())
+						return redirect('Forum.views.post', forum_id=forum_id, post_id=new_post.local_id)
 				else:
 					new_post = Post()
 					quotes_text = ""
@@ -326,11 +372,10 @@ def post(request, forum_id, post_id):
 			num = 0
 			found = False
 			for pt in post_list:
-				if (not pt.hidden) or user_has_permission(subforum.mod_permission, request.user):
-					if pt == post:
-						found = True
-						break
-					num += 1
+				if pt == post:
+					found = True
+					break
+				num += 1
 			if found:
 				page = (num/forum.posts_per_page)+1
 				return redirect('Forum.views.thread', forum_id=forum_id, thread_id=post.thread.local_id, thread_slug=post.thread.slug(), page=page, post_id=post_id)
@@ -369,7 +414,7 @@ def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 						post.thread.name = post.title
 						post.thread.save()
 					post_edited.save()
-					return redirect('Forum.views.thread', forum_id=forum_id, thread_id=post.thread.local_id, thread_slug=post.thread.slug())
+					return redirect('Forum.views.post', forum_id=forum_id, post_id=post.local_id)
 			else:
 				if user_has_permission(post.thread.parent.mod_permission, request.user):
 					edit_post_form = FormPost_Mod(instance=post)

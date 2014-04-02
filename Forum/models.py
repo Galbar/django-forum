@@ -17,10 +17,12 @@ class Forum(models.Model):
 	# Display config
 	posts_per_page = models.IntegerField(default=10)
 	threads_per_page = models.IntegerField(default=20)
-	forum_icon_normal = models.ImageField(upload_to="Forum/icons/", default="Forum/icons/default_normal.jpg")
-	forum_icon_unread = models.ImageField(upload_to="Forum/icons/", default="Forum/icons/default_unread.jpg")
-	forum_icon_pinned = models.ImageField(upload_to="Forum/icons/", default="Forum/icons/default_pinned.jpg")
-	forum_icon_closed = models.ImageField(upload_to="Forum/icons/", default="Forum/icons/default_closed.jpg")
+	forum_icon_normal = models.ImageField(upload_to="Forum/icons/custom/", default="Forum/icons/forum_default_normal.png")
+	forum_icon_unread = models.ImageField(upload_to="Forum/icons/custom/", default="Forum/icons/forum_default_unread.png")
+	thread_icon_normal = models.ImageField(upload_to="Forum/icons/custom/", default="Forum/icons/thread_default_normal.png")
+	thread_icon_unread = models.ImageField(upload_to="Forum/icons/custom/", default="Forum/icons/thread_default_unread.png")
+	thread_icon_pinned = models.ImageField(upload_to="Forum/icons/custom/", default="Forum/icons/thread_default_pinned.png")
+	thread_icon_closed = models.ImageField(upload_to="Forum/icons/custom/", default="Forum/icons/thread_default_closed.png")
 
 	def __unicode__(self):
 		return str(self.local_id) + "-" + self.name

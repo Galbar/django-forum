@@ -78,6 +78,7 @@ _em_list = [
 	GeneralSmilie(r'(\&gt;|\>)(\.|\_)?(\&gt;|\>)', "Forum/emoticons/getlost.png", use_staticfiles=True),
 	GeneralSmilie(r':(-)?\*', "Forum/emoticons/kissing.png", use_staticfiles=True),
 	GeneralSmilie(r'(O.o|O.O|o.O)', "Forum/emoticons/woot.png", use_staticfiles=True),
+	GeneralSmilie(r':(-)?D', "Forum/emoticons/grin.png", use_staticfiles=True),
 ]
 
 def render_emoticons(text):

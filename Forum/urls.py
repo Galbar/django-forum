@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     url(r'^subforum/(?P<subforum_id>\d+)(?P<subforum_slug>[\w\d@\.\+\-_]*)/new-subforum/$', views.newSubforum),
     # Threads
     url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/$', views.thread, name='thread'),
+    url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/edit/$', views.saveThreadSettings),
     url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/post/$', views.replyThread),
     url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/page/(?P<page>\d+)/$', views.thread),
     url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/page/(?P<page>\d+)/#(?P<post_id>\d+)$', views.thread),

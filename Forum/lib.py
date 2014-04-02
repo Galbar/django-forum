@@ -69,30 +69,28 @@ def set_visit(thread, user):
 		l.save()
 
 def check_user_is_spamming(user):
-	ten_seconds_ago = timezone.now()-timedelta(seconds=10)
-	print(timezone.now())
-	print(ten_seconds_ago)
+	delta_time = timezone.now()-timedelta(seconds=3)
 	try:
 		last_post_datetime = Post.objects.filter(publisher=user).order_by("-publication_datetime").first()
-		if last_post_datetime and (last_post_datetime.publication_datetime >= ten_seconds_ago):
+		if last_post_datetime and (last_post_datetime.publication_datetime >= delta_time):
 			raise Http404
 	except ObjectDoesNotExist:
 		pass
 	try:
 		last_edition_datetime = PostEdited.objects.filter(user=user).order_by("-datetime").first()
-		if last_edition_datetime and (last_edition_datetime.datetime >= ten_seconds_ago):
+		if last_edition_datetime and (last_edition_datetime.datetime >= delta_time):
 			raise Http404
 	except ObjectDoesNotExist:
 		pass
 	try:
 		last_report_datetime = PostReported.objects.filter(user=user).order_by("-datetime").first()
-		if last_report_datetime and (last_report_datetime.datetime >= ten_seconds_ago):
+		if last_report_datetime and (last_report_datetime.datetime >= delta_time):
 			raise Http404
 	except ObjectDoesNotExist:
 		pass
 	try:
 		last_subforum_datetime = Subforum.objects.filter(creator=user).order_by("-creation_datetime").first()
-		if last_subforum_datetime and (last_subforum_datetime.creation_datetime >= ten_seconds_ago):
+		if last_subforum_datetime and (last_subforum_datetime.creation_datetime >= delta_time):
 			raise Http404
 	except ObjectDoesNotExist:
 		pass
