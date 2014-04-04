@@ -11,6 +11,7 @@ from Forum.models import *
 from Forum.settings import *
 from Forum.forms import *
 from Forum.lib import *
+import Forum.signals as signals
 from django.template import RequestContext
 from math import ceil
 
@@ -179,7 +180,7 @@ def thread(request, forum_id, thread_id, thread_slug, page=1, template=THREAD_TE
 											'thread': thread,
 											'post_list':post_list[(page*forum.posts_per_page):(page*forum.posts_per_page)+forum.posts_per_page],
 											'thread_current_page':page+1,
-											'thread_pages':range(max(page-1, 1), min(page+4, thread_num_pages+1)),
+											'thread_pages':range(max(page, 1), min(page+3, thread_num_pages+1)),
 											'is_moderator': is_mod,
 											'is_admin':user_has_permission(forum.admin_permission, request.user),
 											'can_post':can_post and request.user.is_authenticated() and (not thread.closed or is_mod),
@@ -286,6 +287,8 @@ def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPL
 						new_post.forum=forum
 						new_post.thread=new_thread
 						new_post.save()
+						# Send new thread signal
+						signals.thread_published.send(sender=forum, thread=new_thread)
 						return redirect('Forum.views.thread', forum_id=forum_id, thread_id=new_thread.local_id, thread_slug=new_thread.slug())
 				else:
 					new_post = Post()
@@ -332,6 +335,8 @@ def replyThread(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLAT
 						new_post.forum=forum
 						new_post.thread=thread
 						new_post.save()
+						# Send signal new post published
+						signals.post_published.send(sender=forum, post=new_post)
 						thread.last_publication_datetime=new_post.publication_datetime
 						thread.save()
 						return redirect('Forum.views.post', forum_id=forum_id, post_id=new_post.local_id)
@@ -499,6 +504,8 @@ def votePostUp(request, forum_id, post_id):
 			else:
 				Vote(user=request.user, post=post, type="Up").save()
 				response_data['action'] = 'added'
+				# Send signal
+				signals.upvote.send(sender=forum, user=request.user, post=post)
 			response_data['score'] = post.score()
 			return HttpResponse(json.dumps(response_data), content_type="application/json")
 	raise Http404
@@ -522,6 +529,8 @@ def votePostDown(request, forum_id, post_id):
 			else:
 				Vote(user=request.user, post=post, type="Down").save()
 				response_data['action'] = 'added'
+				# Send signal
+				signals.downvote.send(sender=forum, user=request.user, post=post)
 			response_data['score'] = post.score()
 			return HttpResponse(json.dumps(response_data), content_type="application/json")
 	raise Http404

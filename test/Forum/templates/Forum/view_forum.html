@@ -79,22 +79,7 @@
 
 	<div class="row">
 		<div class="col-sm-12 hidden-xs text-right">
-			<ul class="pagination pagination-top">
-				{% for i in subforum_pages %}
-					{% if i == subforum_current_page %}
-						<li class="active">
-					{% else %}
-						<li>
-					{% endif %}
-						{% if forum == forum.forum.main_forum %}
-							<a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id page=i  %}">
-						{% else %}
-							<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=i %}">
-						{% endif %}
-						{{ i }}</a>
-					</li>
-				{% endfor %}
-			</ul>
+			{% include "Forum/utils/subforum_pagination.html" with list_of_pages=subforum_pages current_page=subforum_current_page %}
 		</div>
 	</div>
 	<div class="panel panel-info">
@@ -153,23 +138,8 @@
 		</ul>
 	</div>
 	<div class="row">
-		<div class="col-sm-12 hidden-xs text-right">
-			<ul class="pagination pagination-bottom">
-				{% for i in subforum_pages %}
-					{% if i == subforum_current_page %}
-						<li class="active">
-					{% else %}
-						<li>
-					{% endif %}
-						{% if forum == forum.forum.main_forum %}
-							<a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id page=i  %}">
-						{% else %}
-							<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=i %}">
-						{% endif %}
-						{{ i }}</a>
-					</li>
-				{% endfor %}
-			</ul>
+		<div class="col-xs-12 text-right">
+			{% include "Forum/utils/subforum_pagination.html" with list_of_pages=subforum_pages current_page=subforum_current_page %}
 		</div>
 	</div>
 {% endblock %}
