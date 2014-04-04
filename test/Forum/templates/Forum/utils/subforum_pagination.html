@@ -1,0 +1,28 @@
+{% comment %}
+Variables:
+	list_of_pages
+	current_page
+{% endcomment %}
+<ul class="pagination pagination-top">
+	{% if current_page|add:-1 >= list_of_pages|first %}
+		<li><a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id %}">First</a></li>
+		<li><a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=current_page|add:-1 %}">&laquo;</a></li>
+	{% endif %}
+	{% for i in subforum_pages %}
+		{% if i == subforum_current_page %}
+			<li class="active">
+		{% else %}
+			<li>
+		{% endif %}
+			{% if forum == forum.forum.main_forum %}
+				<a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id page=i  %}">
+			{% else %}
+				<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=i %}">
+			{% endif %}
+			{{ i }}</a>
+		</li>
+	{% endfor %}
+	{% if current_page|add:1 <= list_of_pages|last %}
+		<li><a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=current_page|add:1 %}">&raquo;</a></li>
+	{% endif %}
+</ul>

@@ -1,14 +1,9 @@
 import django.dispatch
 
-# pizza_done = django.dispatch.Signal(providing_args=["toppings", "size"])
+# Publication
+thread_published  = django.dispatch.Signal(providing_args=["thread"])
+post_published  = django.dispatch.Signal(providing_args=["post"])
 
-# New Post
-new_post = django.dispatch.Signal(providing_args=[""])
-
-# Votes recieved
-upvote_recieved = django.dispatch.Signal(providing_args=[""])
-downvote_recieved = django.dispatch.Signal(providing_args=[""])
-
-# Votes given
-upvote_given = django.dispatch.Signal(providing_args=[""])
-downvote_given = django.dispatch.Signal(providing_args=[""])
+# Votes
+upvote = django.dispatch.Signal(providing_args=["user", "post"])
+downvote = django.dispatch.Signal(providing_args=["user", "post"])
