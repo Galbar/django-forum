@@ -1,0 +1,106 @@
+{% extends 'Forum/index.html' %}
+{% load staticfiles %}
+{% block head_title %}
+	{{ page_title }}
+{% endblock %}
+{% block forum_content %}
+<h1 class="underlined-element">New Thread</h1>
+<form id="thread-settings-form" role="form" action="" method="POST">
+	{% csrf_token %}
+	<div class="form-group">
+		<strong>Title</strong>
+		{{ form.title }}
+		<span class="help-block">{{ form.title.help_text | safe }}</span>
+		{% if form.title.errors %}
+		<div class="alert alert-danger">
+			{{ form.title.errors }}
+		</div>
+		{% endif %}
+	</div>
+	<div class="form-group">
+		<strong>Content</strong><br>
+		<div class="btn-group">
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[b]" tagcode-post="[/b]" ><span class="glyphicon glyphicon-bold"></span></button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[i]" tagcode-post="[/i]" ><span class="glyphicon glyphicon-italic"></span></button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[center]" tagcode-post="[/center]" ><span class="glyphicon glyphicon-align-center"></span></button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[ul]
+  [*] " tagcode-post="
+[/ul]" >ul</button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[ol]
+  [*] " tagcode-post="
+[/ol]" >ol</button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[img]" tagcode-post="[/img]" ><span class="glyphicon glyphicon-picture"></span></button>
+			</div>
+		{{ form.content }}
+		<span class="help-block">{{ form.content.help_text | safe }}</span>
+		{% if form.content.errors %}
+		<div class="alert alert-danger">
+			{{ form.content.errors }}
+		</div>
+		{% endif %}
+	</div>
+	<div class="form-group">
+		<button class="btn btn-default" id="button-add-poll" type="button">Add Poll</button>
+		<button class="btn btn-default hidden" id="button-remove-poll" type="button">Remove Poll</button>
+		<input type="hidden" name="add_poll" id="id_add_poll" value="False"></input>
+		<input type="hidden" name="poll_option_count" id="id_poll_option_count" value="2"></input>
+	</div>
+	<div class="form-group hidden" id="poll-form">
+		<div class="form-group">
+			<strong>Question</strong>
+			<input id="id_question" class="form-control" type="text" name="question" maxlength="200"></input>
+		</div>
+		<div class="form-group">
+			<input class="form-control poll-option" type="text" name="poll-option[0]" maxlength="200" placeholder="Option 1"></input>
+		</div>
+		<div class="form-group">
+			<input class="form-control poll-option" type="text" name="poll-option[1]" maxlength="200" placeholder="Option 2"></input>
+		</div>
+	</div>
+	<button class="btn btn-default hidden" id="button-add-option" type="button">Add option</button>
+	<div class="text-right">
+		<button class="btn btn-primary text-left" type="submit">Send</button>
+	</div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+$("#id_title").addClass("form-control");
+$("#id_content").addClass("form-control");
+$("#id_content").css("font-family", "Courier New, monospace");
+$( '.bbcode-button' ).on('click', function(){
+	var cursorPosStart = $('#id_content').prop('selectionStart');
+	var cursorPosEnd = $('#id_content').prop('selectionEnd');
+	var v = $("#id_content").val();
+    var opening = $(this).attr("tagcode-prev");
+    var close = $(this).attr("tagcode-post");
+    var textBefore = v.substring(0,  cursorPosStart );
+    var textBetween = v.substring(cursorPosStart, cursorPosEnd);
+    var textAfter  = v.substring( cursorPosEnd, v.length );
+    $('#id_content').val( textBefore+ opening + textBetween + close +textAfter );
+});
+$("#button-add-poll").click(function(){
+	$("#poll-form").removeClass("hidden");
+	$("#button-add-option").removeClass("hidden");
+	$(this).addClass("hidden");
+	$("#button-remove-poll").removeClass("hidden");
+	$("#id_add_poll").val("True");
+});
+$("#button-remove-poll").click(function(){
+	$("#poll-form").addClass("hidden");
+	$("#button-add-option").addClass("hidden");
+	$(this).addClass("hidden");
+	$("#button-add-poll").removeClass("hidden");
+	$("#id_add_poll").val("False ");
+});
+$("#button-add-option").click(function(){
+	var num = parseInt($("#id_poll_option_count").val());
+	$("#poll-form").append('\
+<div class="form-group">\
+	<input class="form-control poll-option" type="text" name="poll-option['+num+']" maxlength="200" placeholder="Option '+(num+1)+'"></input>\
+</div>');
+	$("#id_poll_option_count").val(num+1);
+});
+$("#id_poll_option_count").val("2");
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+<form id="thread-settings-form" role="form" action="{% url 'Forum.views.editPost' forum_id=forum_id post_id=post.local_id %}" method="POST">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		<h2 class="modal-title">Post reply</h2>
+	</div>
+	<div class="modal-body">
+		{% csrf_token %}
+		<div class="form-group">
+			{{ form.title }}
+			{{ form.content }}
+		</div>
+		{% if user_is_mod %}
+		<div class="checkbox">
+			<label>
+				{{ form.hidden }} Hidden
+			</label>
+		</div>
+		{% endif %}
+	</div>
+	<div class="modal-footer">
+		<a class="btn btn-default" type="submit" href="{% url 'Forum.views.editPost' forum_id=forum_id post_id=post.local_id %}">Advanced editing</a>
+		<button class="btn btn-primary" type="submit">Send</button>
+	</div>
+</form>
+<script type="text/javascript">
+$(".modal-body input[type=text]").addClass("form-control");
+$("#id_title").attr({placeholder:"Post title (optional)"});
+$(".modal-body textarea").addClass("form-control");
+$(".modal-body textarea").css("font-family", "Courier New, monospace");
+$(".modal-body textarea").attr({placeholder:"Your reply here..."});
+</script>

@@ -1,0 +1,22 @@
+<form id="thread-settings-form" role="form" action="{% url 'Forum.views.replyThread' forum_id=forum_id thread_id=thread.local_id thread_slug=thread.slug %}" method="POST">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		<h2 class="modal-title">Post reply</h2>
+	</div>
+	<div class="modal-body">
+		{% csrf_token %}
+		<div class="form-group">
+			{{ form.content }}
+		</div>
+	</div>
+	<div class="modal-footer">
+		<a class="btn btn-default" type="submit" href="{% url 'Forum.views.replyThread' forum_id=forum_id thread_id=thread.local_id thread_slug=thread.slug %}">Advanced editing</a>
+		<button class="btn btn-primary" type="submit">Send</button>
+	</div>
+</form>
+<script type="text/javascript">
+$(".modal-body input").addClass("form-control");
+$(".modal-body textarea").addClass("form-control");
+$(".modal-body textarea").css("font-family", "Courier New, monospace");
+$(".modal-body textarea").attr({placeholder:"Your reply here..."});
+</script>

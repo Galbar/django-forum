@@ -1,0 +1,69 @@
+{% extends 'Forum/index.html' %}
+{% load staticfiles %}
+{% block head_title %}
+	{{ page_title }}
+{% endblock %}
+{% block forum_content %}
+<h1 class="underlined-element">Post reply</h1>
+<form id="thread-settings-form" role="form" action="" method="POST">
+	{% csrf_token %}
+	<div class="form-group">
+		<strong>Title</strong>
+		{{ form.title }}
+		<span class="help-block">{{ form.title.help_text | safe }}</span>
+		{% if form.title.errors %}
+		<div class="alert alert-danger">
+			{{ form.title.errors }}
+		</div>
+		{% endif %}
+	</div>
+	<div class="form-group">
+		<strong>Content</strong><br>
+		<div class="btn-group">
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[b]" tagcode-post="[/b]" ><span class="glyphicon glyphicon-bold"></span></button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[i]" tagcode-post="[/i]" ><span class="glyphicon glyphicon-italic"></span></button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[center]" tagcode-post="[/center]" ><span class="glyphicon glyphicon-align-center"></span></button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[ul]
+  [*] " tagcode-post="
+[/ul]" >ul</button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[ol]
+  [*] " tagcode-post="
+[/ol]" >ol</button>
+				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[img]" tagcode-post="[/img]" ><span class="glyphicon glyphicon-picture"></span></button>
+			</div>
+		{{ form.content }}
+		<span class="help-block">{{ form.content.help_text | safe }}</span>
+		{% if form.content.errors %}
+		<div class="alert alert-danger">
+			{{ form.content.errors }}
+		</div>
+		{% endif %}
+	</div>
+	{% if user_is_mod %}
+	<div class="checkbox">
+		<label>
+			{{ form.hidden }} Hidden
+		</label>
+	</div>
+	{% endif %}
+	<button class="btn btn-primary text-left" type="submit">Send</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script type="text/javascript">
+$("#id_title").addClass("form-control");
+$("#id_content").addClass("form-control");
+$("#id_content").css("font-family", "Courier New, monospace");
+$( '.bbcode-button' ).on('click', function(){
+	var cursorPosStart = $('#id_content').prop('selectionStart');
+	var cursorPosEnd = $('#id_content').prop('selectionEnd');
+	v = $("#id_content").val();
+    opening = $(this).attr("tagcode-prev");
+    close = $(this).attr("tagcode-post");
+    textBefore = v.substring(0,  cursorPosStart );
+    textBetween = v.substring(cursorPosStart, cursorPosEnd);
+    textAfter  = v.substring( cursorPosEnd, v.length );
+    $('#id_content').val( textBefore+ opening + textBetween + close +textAfter );
+});
+</script>
+{% endblock %}

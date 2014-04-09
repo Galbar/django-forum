@@ -1,0 +1,11 @@
+<form role="form" action="{% url 'Forum.views.voteThreadPoll' forum_id=forum_id thread_id=thread.local_id thread_slug=thread.slug %}" method="POST">
+	{% csrf_token %}
+	{% for option in poll.option_set.all %}
+	<div class="form-group">
+		<input type="radio" name="poll_answer" value="{{ option.content }}"> {{ option.content }}<br>
+	</div>
+	{% endfor %}
+	<div class="text-right">
+		<button class="btn btn-primary text-left" type="submit">Send</button>
+	</div>
+</form>

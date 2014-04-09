@@ -1,0 +1,22 @@
+<form role="form" action="{% url 'Forum.views.reportPost' forum_id=forum_id post_id=post.local_id %}" method="POST">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+		<h2 class="modal-title">Report post</h2>
+	</div>
+	<div class="modal-body">
+		{% csrf_token %}
+		<div class="form-group">
+			<strong>Reason</strong> <small>(optional)</small>
+			<textarea class="form-control" id="id_reason" rows="2" name="reason" style="width: 100%;"></textarea>
+			<span class="help-block">{{ form.reason.help_text | safe }}</span>
+			{% if form.reason.errors %}
+			<div class="alert alert-danger">
+				{{ form.reason.errors }}
+			</div>
+			{% endif %}
+		</div>
+	</div>
+	<div class="modal-footer">
+		<button class="btn btn-primary text-left" type="submit">Report</button>
+	</div>
+</form>

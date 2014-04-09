@@ -1,0 +1,32 @@
+{% extends 'Forum/index.html' %}
+{% load staticfiles %}
+{% block head_title %}
+	Forum Login
+{% endblock %}
+{% block forum_content %}
+<div class="col-xs-12 col-sm-4 col-sm-offset-4">
+	<h1 class="underlined-element">Login</h1>
+	<form role="form" action="" method="POST">
+		{% csrf_token %}		
+		<div class="form-group">
+			<input class="form-control" id="id_username" name="username" placeholder="Username" type="text" autofocus />
+			{% if form.username.errors %}
+			<div class="alert alert-danger">
+				{{ form.username.errors }}
+			</div>
+			{% endif %}
+		</div>
+		<div class="form-group">
+			<input class="form-control" id="id_password" name="password" placeholder="Password" type="password" />
+			{% if form.password.errors %}
+			<div class="alert alert-danger">
+				{{ form.password.errors }}
+			</div>
+			{% endif %}
+		</div>
+		<div class="text-right">
+			<button class="btn btn-lg btn-success text-left" type="submit">Login</button>
+		</div>
+	</form>
+</div>
+{% endblock %}
