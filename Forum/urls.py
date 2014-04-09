@@ -19,6 +19,7 @@ urlpatterns = patterns('',
     url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/page/(?P<page>\d+)/#(?P<post_id>\d+)$', views.thread),
     url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/page/last/$', views.threadLastPage, name='thread_last_page'),
     url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/first-unread/$', views.firstPostUnreadThread),
+    url(r'^thread/(?P<thread_id>\d+)(?P<thread_slug>[\w\d@\.\+\-_]*)/poll/vote/$', views.voteThreadPoll),
     # Posts
     url(r'^post/(?P<post_id>\d+)/$', views.post),
     url(r'^post/(?P<post_id>\d+)/edit/$', views.editPost),

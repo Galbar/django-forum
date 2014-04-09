@@ -14,6 +14,8 @@ class Forum(models.Model):
 	# Votes config
 	allow_up_votes = models.BooleanField(default=True)
 	allow_down_votes = models.BooleanField(default=True)
+	positive_score_event = models.IntegerField(default=100)
+	negative_score_event = models.IntegerField(default=-100)
 	# Display config
 	posts_per_page = models.IntegerField(default=10)
 	threads_per_page = models.IntegerField(default=20)
@@ -73,6 +75,11 @@ class Subforum(models.Model):
 		return False
 
 class Thread(models.Model):
+	def _get_poll(self):
+		try:
+			return Poll.objects.get(thread=self)
+		except ObjectDoesNotExist:
+			return None
 	local_id = models.IntegerField()
 	name = models.CharField(max_length=100)
 	parent = models.ForeignKey(Subforum)
@@ -84,6 +91,7 @@ class Thread(models.Model):
 	closed = models.BooleanField(default=False)
 	pinned = models.BooleanField(default=False)
 	visit_counter = models.IntegerField(default=0)
+	poll = property(_get_poll)
 
 	class Meta:
 		unique_together = ('local_id','forum')
@@ -109,10 +117,50 @@ class Thread(models.Model):
 		except ObjectDoesNotExist:
 			return False
 
+	def setPoll(self, question, option_list):
+		if self.poll:
+			self.poll.question = question;
+			for opt in self.poll.option_set.all():
+				opt.delete()
+			for opt in option_list:
+				PollOption(content=opt, poll=self.poll).save()
+			for vote in self.poll.pollvote_set.all():
+				vote.delete()
+			self.poll.save()
+		else:
+			Poll(question=question, thread=self).save()
+			for opt in option_list:
+				PollOption(content=opt, poll=self.poll).save()
+		self.save()
+
 class Poll(models.Model):
 	question = models.CharField(max_length=200)
 	thread = models.ForeignKey(Thread, unique=True)
-	vote_count = models.IntegerField(default=0)
+	
+	def getTotalVotes(self):
+		opt_list = self.option_set.all()
+		ret = 0
+		for opt in opt_list:
+			ret += opt.vote_count
+		return ret
+
+	def userCanVote(self, user):
+		try:
+			PollVote.objects.get(poll=self, user=user)
+			return False
+		except ObjectDoesNotExist:
+			return True
+
+	def vote(self, user, answer):
+		try:
+			poll_option = self.option_set.get(content=answer)
+			PollVote(user=user, poll=self).save()
+			poll_option.vote_count += 1
+			print poll_option.vote_count
+			poll_option.save()
+		except ObjectDoesNotExist:
+			raise Http404
+		return
 
 	def __unicode__(self):
 		return self.thread.__unicode__()+"-"+self.question
@@ -122,8 +170,15 @@ class PollOption(models.Model):
 	poll = models.ForeignKey(Poll, related_name="option_set")
 	vote_count = models.IntegerField(default=0)
 
+	def percentage(self):
+		return float(self.vote_count)/float(self.poll.getTotalVotes()) * 100
+
 	def __unicode__(self):
 		return self.content
+
+class PollVote(models.Model):
+	user = models.ForeignKey(User)
+	poll = models.ForeignKey(Poll)
 
 class Post(models.Model):
 	def _get_upvotes(self):
@@ -140,6 +195,9 @@ class Post(models.Model):
 	upvotes = property(_get_upvotes)
 	downvotes = property(_get_downvotes)
 	hidden = models.BooleanField(default=False)
+	score_event_sent = models.BooleanField(default=False)
+	user_is_mod = models.BooleanField(default=False)
+	user_is_admin = models.BooleanField(default=False)
 
 	def __unicode__(self):
 		return str(self.local_id) + "-" + self.title

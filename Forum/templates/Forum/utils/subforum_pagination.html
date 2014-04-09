@@ -8,8 +8,8 @@ Variables:
 		<li><a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id %}">First</a></li>
 		<li><a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=current_page|add:-1 %}">&laquo;</a></li>
 	{% endif %}
-	{% for i in subforum_pages %}
-		{% if i == subforum_current_page %}
+	{% for i in list_of_pages %}
+		{% if i == current_page %}
 			<li class="active">
 		{% else %}
 			<li>
@@ -22,7 +22,7 @@ Variables:
 			{{ i }}</a>
 		</li>
 	{% endfor %}
-	{% if current_page|add:1 <= list_of_pages|last %}
+	{% if list_of_pages|last == None and current_page|add:1 <= list_of_pages|last %}
 		<li><a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=forum.local_id subforum_slug=forum.slug page=current_page|add:1 %}">&raquo;</a></li>
 	{% endif %}
 </ul>

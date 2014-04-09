@@ -26,42 +26,42 @@
 	<link href="{% static 'Forum/css/bbcode-codehighlighter.css' %}" rel="stylesheet">
 </head>
 <body>
+<div class="navbar navbar-inverse" role="navigation">
+	<div class="container">
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="{% url 'base_forum' forum_id=forum_id %}">Django Forum App</a>
+		</div>
+		<div class="collapse navbar-collapse">
+			<ul class="nav navbar-nav">
+				<li class="active"><a href="{% url 'base_forum' forum_id=forum_id %}">Forum</a></li>
+			</ul>
+			<ul class="nav navbar-nav navbar-right">
+				{% if user.is_authenticated %}
+					<li>
+						<a href="#"><span class="glyphicon glyphicon-user"></span> {{ user.username }}</a>
+					</li>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li><a href="{% url 'Forum.views.logout' forum_id=forum_id %}">Logout</a></li>
+						</ul>
+					</li>
+				{% else %}
+					<li>
+						<a href="{% url 'Forum.views.login' %}">Login</a>
+					</li>
+				{% endif %}
+			</ul>
+		</div>
+	</div><!--/.nav-collapse -->
+</div>
 <div class="container forum-content">
-	<div class="navbar navbar-inverse" role="navigation">
-		<div class="container-fluid">
-			<div class="navbar-header">
-				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-					<span class="sr-only">Toggle navigation</span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
-				<a class="navbar-brand" href="{% url 'base_forum' forum_id=forum_id %}">Django Forum App</a>
-			</div>
-			<div class="collapse navbar-collapse">
-				<ul class="nav navbar-nav">
-					<li class="active"><a href="{% url 'base_forum' forum_id=forum_id %}">Forum</a></li>
-				</ul>
-				<ul class="nav navbar-nav navbar-right">
-					{% if user.is_authenticated %}
-						<li>
-							<a href="#"><span class="glyphicon glyphicon-user"></span> {{ user.username }}</a>
-						</li>
-						<li class="dropdown">
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b></a>
-							<ul class="dropdown-menu">
-								<li><a href="{% url 'Forum.views.logout' forum_id=forum_id %}">Logout</a></li>
-							</ul>
-						</li>
-					{% else %}
-						<li>
-							<a href="{% url 'Forum.views.login' %}">Login</a>
-						</li>
-					{% endif %}
-				</ul>
-			</div>
-		</div><!--/.nav-collapse -->
-	</div>
 
 	{% block forum_content %}
 	{% endblock %}

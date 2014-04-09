@@ -16,7 +16,7 @@ from django.template import RequestContext
 from math import ceil
 
 # Create your views here.
-def login(request, forum_id, template=FORM_TEMPLATE):
+def login(request, forum_id, template="Forum/forms/login.html", template_ajax="Forum/forms/ajax/login.html"):
 	form = None
 	if request.method == 'POST':
 		form = FormUserLogin(request.POST)
@@ -34,11 +34,11 @@ def login(request, forum_id, template=FORM_TEMPLATE):
 	c = RequestContext(request, {
 							'forum_id':forum_id,
 							'form': form,
-							'page_title': 'Login',
-							'title': 'Login',
-							'submit_btn_text': 'Login',
 						})
-	return render(request, template, c)
+	if request.is_ajax():
+		return render(request, template_ajax, c)
+	else:
+		return render(request, template, c)
 
 
 @login_required
@@ -86,7 +86,7 @@ def subforum(request, forum_id, subforum_id, subforum_slug, page=1, template=SUB
 											'subforum_list':subforum_list,
 											'thread_list':thread_list[(page*forum.threads_per_page):(page*forum.threads_per_page)+forum.threads_per_page],
 											'subforum_current_page':page+1,
-											'subforum_pages':range(max(page-1, 1), min(page+4, subforum_num_pages+1)),
+											'subforum_pages':range(max(page, 1), min(page+3, subforum_num_pages+1)),
 											'is_admin':user_has_permission(forum.admin_permission, request.user),
 											'is_moderator': is_mod,
 											'can_create_thread':can_create_thread and request.user.is_authenticated(),
@@ -163,12 +163,14 @@ def thread(request, forum_id, thread_id, thread_slug, page=1, template=THREAD_TE
 				unfiltered_post_list = thread.post_set.order_by('local_id')
 				for pt in unfiltered_post_list:
 					if (not pt.hidden) or user_has_permission(subforum.mod_permission, request.user):
-						pt.user_is_mod = user_has_permission(subforum.mod_permission, pt.publisher)
-						pt.user_is_admin = user_has_permission(forum.admin_permission, pt.publisher)
 						if request.user.is_authenticated():
 							pt.is_quoted = get_quote_instance(request.user, pt)
 							pt.vote = get_vote_instance(request.user, pt)
 						post_list.append(pt)
+				if request.user.is_authenticated() and thread.poll_set.count() and thread.poll_set.first().userCanVote(request.user):
+					poll = thread.poll_set.first()
+				else:
+					poll = None
 				page = int(page) -1
 				thread_num_pages = int(ceil(float(len(post_list))/float(forum.posts_per_page)))
 				if thread_num_pages > page and 0 <= page:
@@ -184,6 +186,7 @@ def thread(request, forum_id, thread_id, thread_slug, page=1, template=THREAD_TE
 											'is_moderator': is_mod,
 											'is_admin':user_has_permission(forum.admin_permission, request.user),
 											'can_post':can_post and request.user.is_authenticated() and (not thread.closed or is_mod),
+											'poll': poll,
 										})
 					return render(request, template, c)
 			else:
@@ -214,7 +217,7 @@ def threadLastPage(request, forum_id, thread_id, thread_slug):
 
 @login_required
 @csrf_protect
-def saveThreadSettings(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLATE):
+def saveThreadSettings(request, forum_id, thread_id, thread_slug, template="Forum/forms/thread_settings.html"):
 	forum = get_forum_instance(forum_id)
 	if forum:
 		thread = get_thread_instance(forum, thread_id)
@@ -232,9 +235,7 @@ def saveThreadSettings(request, forum_id, thread_id, thread_slug, template=FORM_
 					c = RequestContext(request, {
 										'forum_id':forum_id,
 										'form': form,
-										'page_title': 'Thread Settings',
-										'title': 'Thread Settings',
-										'submit_btn_text': 'Save',
+										'thread': thread,
 									})
 					return render(request, template, c)
 	raise Http404
@@ -258,7 +259,7 @@ def firstPostUnreadThread(request, forum_id, thread_id, thread_slug):
 
 @login_required
 @csrf_protect
-def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPLATE):
+def newThread(request, forum_id, subforum_id, subforum_slug, template="Forum/forms/thread.html"):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
 	if forum:
@@ -269,7 +270,7 @@ def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPL
 			if user_has_permission(subforum.create_thread_permission, request.user):
 				if request.method == 'POST':
 					new_post = Post(publisher=request.user)
-					new_post_form = FormPost(request.POST, instance=new_post)
+					new_post_form = FormNewThread(request.POST, instance=new_post)
 					if new_post_form.is_valid():
 						new_post = new_post_form.save(commit=False)
 						new_post.local_id = forum.post_set.count()
@@ -283,6 +284,17 @@ def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPL
 							hidden=new_post.hidden,
 							)
 						new_thread.save()
+						if request.POST.get("add_poll", "False") == "True" and request.POST.get("question", "") != "":
+							rang = range(0, int(request.POST.get("poll_option_count", "2")))
+							question = request.POST.get("question")
+							option_list = []
+							for i in rang:
+								opt = request.POST.get("poll-option["+str(i)+"]", "")
+								if opt != "":
+									option_list.append(opt)
+							if len(option_list) >= 2:
+								new_thread.setPoll(question, option_list)
+
 						new_post.hidden=False
 						new_post.forum=forum
 						new_post.thread=new_thread
@@ -292,10 +304,7 @@ def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPL
 						return redirect('Forum.views.thread', forum_id=forum_id, thread_id=new_thread.local_id, thread_slug=new_thread.slug())
 				else:
 					new_post = Post()
-					if user_has_permission(subforum.mod_permission, request.user):
-						new_post_form = FormPost_Mod(instance=new_post)
-					else:
-						new_post_form = FormPost(instance=new_post)
+					new_post_form = FormNewThread(instance=new_post)
 				c = RequestContext(request, {
 										'forum_id':forum_id,
 										'form': new_post_form,
@@ -314,7 +323,7 @@ def newThread(request, forum_id, subforum_id, subforum_slug, template=FORM_TEMPL
 
 @login_required
 @csrf_protect
-def replyThread(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLATE):
+def replyThread(request, forum_id, thread_id, thread_slug, template="Forum/forms/post.html", template_ajax="Forum/forms/ajax/post.html"):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
 	if forum:
@@ -334,11 +343,16 @@ def replyThread(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLAT
 						new_post.local_id = forum.post_set.count()
 						new_post.forum=forum
 						new_post.thread=thread
+						new_post.user_is_mod = user_has_permission(thread.parent.mod_permission, request.user),
+						new_post.user_is_admin = user_has_permission(forum.admin_permission, request.user),
 						new_post.save()
 						# Send signal new post published
 						signals.post_published.send(sender=forum, post=new_post)
 						thread.last_publication_datetime=new_post.publication_datetime
 						thread.save()
+						quote_list = Quote.objects.filter(user=request.user, thread=thread)
+						for quote in quote_list:
+							quote.delete()
 						return redirect('Forum.views.post', forum_id=forum_id, post_id=new_post.local_id)
 				else:
 					new_post = Post()
@@ -346,26 +360,54 @@ def replyThread(request, forum_id, thread_id, thread_slug, template=FORM_TEMPLAT
 					quote_list = Quote.objects.filter(user=request.user, thread=thread)
 					for quote in quote_list:
 						quotes_text += "[quote="+quote.post.publisher.username+"]"+quote.post.content+"[/quote]\n\n"
-						quote.delete()
 					new_post.content = quotes_text
 					if user_has_permission(thread.parent.mod_permission, request.user):
 						new_post_form = FormPost_Mod(instance=new_post)
 					else:
 						new_post_form = FormPost(instance=new_post)
-				c = RequestContext(request, {
+				if request.is_ajax():
+					template = template_ajax
+					c = RequestContext(request, {
+											'forum_id':forum_id,
+											'form': new_post_form,
+											'thread':thread,
+										})
+				else:
+					c = RequestContext(request, {
 										'forum_id':forum_id,
 										'form': new_post_form,
 										'page_title': 'Reply Thread',
 										'title': 'Reply Thread',
-										'submit_btn_text': 'Reply',
+										'submit_btn_text': 'Send',
 									})
 				return render(request, template, c)
+
+					
 			else:
 				c = RequestContext(request, {
 											'forum_id':forum_id,
 					})
 				return render(request, CANT_VIEW_CONTENT, c)
 	raise Http404
+
+@login_required
+@csrf_protect
+def voteThreadPoll(request, forum_id, thread_id, thread_slug):
+	forum = get_forum_instance(forum_id)
+	if forum:
+		thread = get_thread_instance(forum, thread_id)
+		if thread:
+			if not check_slug(thread, thread_slug):
+				return redirect('Forum.views.voteThreadPoll', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
+			subforum = thread.parent
+			is_mod = user_has_permission(subforum.mod_permission, request.user)
+			if user_has_permission(subforum.view_permission, request.user) and (not thread.hidden or is_mod):
+				if thread.poll:
+					if thread.poll.userCanVote(request.user) and request.method == 'POST':
+						answer = request.POST.get("poll_answer", False)
+						if answer:
+							thread.poll.vote(request.user, answer)
+	return redirect('Forum.views.thread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
 
 def post(request, forum_id, post_id):
 	forum = get_forum_instance(forum_id)
@@ -388,7 +430,7 @@ def post(request, forum_id, post_id):
 
 @login_required
 @csrf_protect
-def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
+def editPost(request, forum_id, post_id, template="Forum/forms/edit_post.html", template_ajax="Forum/forms/ajax/edit_post.html"):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
 	if forum:
@@ -414,8 +456,11 @@ def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 						user_is_moderator = user_has_permission(post.thread.parent.mod_permission, request.user),
 						user_is_administrator = user_has_permission(forum.admin_permission, request.user),
 						)
-					post = edit_post_form.save()
+					post = edit_post_form.save(commit=False)
 					if post.thread.post_set.first() == post:
+						if post.title == "":
+							post.title = post_old_title
+							post.save()
 						post.thread.name = post.title
 						post.thread.save()
 					post_edited.save()
@@ -433,16 +478,18 @@ def editPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 			c = RequestContext(request, {
 									'forum_id':forum_id,
 									'form': edit_post_form,
-									'page_title': 'Edit Post',
-									'title': 'Edit Post',
-									'submit_btn_text': 'Save',
+									'post':post,
+									'user_is_mod':user_has_permission(post.thread.parent.mod_permission, request.user),
 								})
-			return render(request, template, c)
+			if request.is_ajax():
+				return render(request, template_ajax, c)
+			else:
+				return render(request, template, c)
 	raise Http404
 
 @login_required
 @csrf_protect
-def reportPost(request, forum_id, post_id, template=FORM_TEMPLATE):
+def reportPost(request, forum_id, post_id, template="Forum/forms/report_post.html", template_ajax="Forum/forms/ajax/report_post.html"):
 	check_user_is_spamming(request.user)
 	forum = get_forum_instance(forum_id)
 	if forum:
@@ -455,17 +502,18 @@ def reportPost(request, forum_id, post_id, template=FORM_TEMPLATE):
 					report_post.user = request.user
 					report_post.post = post
 					report_post.save()
-					return redirect('Forum.views.thread', forum_id=forum_id, thread_id=post.thread.local_id, thread_slug=post.thread.slug())
+					return redirect('Forum.views.post', forum_id=forum_id, post_id=post.local_id)
 			else:
 				report_post_form = FormReportPost()
 			c = RequestContext(request, {
 									'forum_id':forum_id,
 									'form': report_post_form,
-									'page_title': 'Report Post',
-									'title': 'Report Post',
-									'submit_btn_text': 'Report',
+									'post': post,
 								})
-			return render(request, template, c)
+			if request.is_ajax():
+				return render(request, template_ajax, c)
+			else:
+				return render(request, template, c)
 	raise Http404
 
 @login_required
@@ -506,6 +554,10 @@ def votePostUp(request, forum_id, post_id):
 				response_data['action'] = 'added'
 				# Send signal
 				signals.upvote.send(sender=forum, user=request.user, post=post)
+				if not post.score_event_sent and post.score() >= forum.positive_score_event:
+					post.score_event_sent = True
+					post.save()
+					signals.positive_score_event.send(sender=forum, post=post)
 			response_data['score'] = post.score()
 			return HttpResponse(json.dumps(response_data), content_type="application/json")
 	raise Http404
@@ -531,6 +583,10 @@ def votePostDown(request, forum_id, post_id):
 				response_data['action'] = 'added'
 				# Send signal
 				signals.downvote.send(sender=forum, user=request.user, post=post)
+				if not post.score_event_sent and post.score() <= forum.negative_score_event:
+					post.score_event_sent = True
+					post.save()
+					signals.negative_score_event.send(sender=forum, post=post)
 			response_data['score'] = post.score()
 			return HttpResponse(json.dumps(response_data), content_type="application/json")
 	raise Http404
