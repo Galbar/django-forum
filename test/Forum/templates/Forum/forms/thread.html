@@ -19,19 +19,7 @@
 	</div>
 	<div class="form-group">
 		<strong>Content</strong><br>
-		<div class="btn-group">
-				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[b]" tagcode-post="[/b]" ><span class="glyphicon glyphicon-bold"></span></button>
-				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[i]" tagcode-post="[/i]" ><span class="glyphicon glyphicon-italic"></span></button>
-				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[center]" tagcode-post="[/center]" ><span class="glyphicon glyphicon-align-center"></span></button>
-				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[ul]
-  [*] " tagcode-post="
-[/ul]" >ul</button>
-				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[ol]
-  [*] " tagcode-post="
-[/ol]" >ol</button>
-				<button type="button" class="btn btn-sm btn-default bbcode-button" tagcode-prev="[img]" tagcode-post="[/img]" ><span class="glyphicon glyphicon-picture"></span></button>
-			</div>
-		{{ form.content }}
+		<textarea name="content" id="id_content" style="height:300px;width:100%;">{{ form.content.value|default_if_none:"" }}</textarea>
 		<span class="help-block">{{ form.content.help_text | safe }}</span>
 		{% if form.content.errors %}
 		<div class="alert alert-danger">
@@ -66,18 +54,12 @@
 {% block scripts %}
 <script type="text/javascript">
 $("#id_title").addClass("form-control");
-$("#id_content").addClass("form-control");
-$("#id_content").css("font-family", "Courier New, monospace");
-$( '.bbcode-button' ).on('click', function(){
-	var cursorPosStart = $('#id_content').prop('selectionStart');
-	var cursorPosEnd = $('#id_content').prop('selectionEnd');
-	var v = $("#id_content").val();
-    var opening = $(this).attr("tagcode-prev");
-    var close = $(this).attr("tagcode-post");
-    var textBefore = v.substring(0,  cursorPosStart );
-    var textBetween = v.substring(cursorPosStart, cursorPosEnd);
-    var textAfter  = v.substring( cursorPosEnd, v.length );
-    $('#id_content').val( textBefore+ opening + textBetween + close +textAfter );
+$(function() {
+	$("#id_content").sceditor({
+		plugins: "bbcode",
+		style: "{% static 'Forum/SCEditor/jquery.sceditor.default.min.css' %}",
+		toolbarExclude:"maximize,email,subscript,superscript,print,ltr,rtl,font"
+	});
 });
 $("#button-add-poll").click(function(){
 	$("#poll-form").removeClass("hidden");
