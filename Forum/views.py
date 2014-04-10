@@ -250,7 +250,7 @@ def firstPostUnreadThread(request, forum_id, thread_id, thread_slug):
 				return redirect('Forum.views.firstPostUnreadThread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
 			last_visit = get_last_visit_instance(request.user, thread)
 			if last_visit:
-				last_post = Post.objects.order_by('publication_datetime').filter(publication_datetime__gt=last_visit.datetime).first()
+				last_post = Post.objects.order_by('publication_datetime').filter(thread=thread, publication_datetime__gt=last_visit.datetime).first()
 				if last_post:
 					return redirect('Forum.views.post', forum_id=forum_id, post_id=last_post.local_id)
 			print("shiet")
@@ -460,10 +460,10 @@ def editPost(request, forum_id, post_id, template="Forum/forms/edit_post.html", 
 					if post.thread.post_set.first() == post:
 						if post.title == "":
 							post.title = post_old_title
-							post.save()
 						post.thread.name = post.title
 						post.thread.save()
 					post_edited.save()
+					post.save()
 					return redirect('Forum.views.post', forum_id=forum_id, post_id=post.local_id)
 			else:
 				if user_has_permission(post.thread.parent.mod_permission, request.user):

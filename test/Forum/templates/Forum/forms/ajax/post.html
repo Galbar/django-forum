@@ -1,3 +1,4 @@
+{% load staticfiles %}
 <form id="thread-settings-form" role="form" action="{% url 'Forum.views.replyThread' forum_id=forum_id thread_id=thread.local_id thread_slug=thread.slug %}" method="POST">
 	<div class="modal-header">
 		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -6,7 +7,7 @@
 	<div class="modal-body">
 		{% csrf_token %}
 		<div class="form-group">
-			{{ form.content }}
+			<textarea name="content" id="id_content" style="height:200px;width:100%;">{{ form.content.value|default_if_none:"" }}</textarea>
 		</div>
 	</div>
 	<div class="modal-footer">
@@ -15,8 +16,11 @@
 	</div>
 </form>
 <script type="text/javascript">
-$(".modal-body input").addClass("form-control");
-$(".modal-body textarea").addClass("form-control");
-$(".modal-body textarea").css("font-family", "Courier New, monospace");
-$(".modal-body textarea").attr({placeholder:"Your reply here..."});
+$("#forms-modal").on("shown.bs.modal", function() {
+	$(".modal-body textarea").sceditor({
+		plugins: "bbcode",
+		style: "{% static 'Forum/SCEditor/jquery.sceditor.default.min.css' %}",
+		toolbarExclude:"maximize,email,subscript,superscript,print,ltr,rtl,font"
+	});
+});
 </script>

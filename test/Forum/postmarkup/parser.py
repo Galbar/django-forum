@@ -5,6 +5,8 @@ List of supported elements:
 [*]
 [b]
 [center]
+[left]
+[right]
 [code]
 [color]
 [i]
@@ -41,7 +43,7 @@ __all__ = ["annotate_link",
            "ListItemTag",
            "SizeTag",
            "ColorTag",
-           "CenterTag",           
+           "AlignTag",           
            "SectionTag",
            "DefaultTag",
            "create",
@@ -402,7 +404,7 @@ class PygmentsCodeTag(TagBase):
             lexer = get_lexer_by_name(self.params)
         except ClassNotFound:
             contents = _escape(contents)
-            return u'<div class="code"><pre>%s</pre></div>' % contents
+            return u'Code:<div class="code"><pre>%s</pre></div>' % contents
         
         formatter = HtmlFormatter(linenos=self.line_numbers, cssclass=u"code")
         hcontents = highlight(contents, lexer, formatter)
@@ -550,7 +552,7 @@ class OrderedListTag(ListTag):
 class ListItemTag(TagBase):
 
     def __init__(self, name, **kwargs):
-        TagBase.__init__(self, name, auto_close=True)        
+        TagBase.__init__(self, name, auto_close=True)
 
     def render_open(self, parser, node_index):
 
@@ -564,6 +566,16 @@ class ListItemTag(TagBase):
 
         return u"</li><li>"
 
+class HorizontalLineTag(TagBase):
+
+    def __init__(self, name, **kwargs):
+        TagBase.__init__(self, name, auto_close=True, strip_first_newline=True)
+
+    def render_open(self, parser, node_index):
+            return u""
+
+    def render_close(self, parser, node_index):
+        return u'<hr>'
 
 class SizeTag(TagBase):
 
@@ -583,16 +595,16 @@ class SizeTag(TagBase):
 
         self.size = self.validate_size(self.size)
 
-        return u'<span style="font-size:%spx">' % self.size
+        return u'<font size="%spx">' % self.size
 
     def render_close(self, parser, node_index):
         if self.size is None:
             return u""
-        return u'</span>'
+        return u'</font>'
 
     def validate_size(self, size):
-        size = min(64, size)
-        size = max(4, size)
+        size = min(7, size)
+        size = max(1, size)
         return size
 
 
@@ -626,13 +638,14 @@ class ColorTag(TagBase):
         return u'</span>'
 
 
-class CenterTag(TagBase):
+class AlignTag(TagBase):
 
     def __init__(self, name, **kwargs):
         TagBase.__init__(self, name, inline=False)
+        self.align = name
 
     def render_open(self, parser, node_index, **kwargs):
-        return u'<div style="text-align:center;">'
+        return u'<div style="text-align:'+self.align+';">'
 
     def render_close(self, parser, node_index):
         return u'</div>'
@@ -735,9 +748,13 @@ def create(include=None,
     add_tag(ListItemTag, u'*')
     add_tag(ListItemTag, u'li')
 
+    add_tag(HorizontalLineTag, u"hr")
     add_tag(SizeTag, u"size")
     add_tag(ColorTag, u"color")
-    add_tag(CenterTag, u"center")
+    add_tag(AlignTag, u"center")
+    add_tag(AlignTag, u"right")
+    add_tag(AlignTag, u"left")
+    add_tag(AlignTag, u"justify")
 
     if use_pygments:
         assert pygments_available, "Install Pygments (http://pygments.org/) or call create with use_pygments=False"

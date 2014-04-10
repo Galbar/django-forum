@@ -189,7 +189,7 @@ class Post(models.Model):
 	title = models.CharField(max_length=200, blank=True)
 	forum = models.ForeignKey(Forum)
 	thread = models.ForeignKey(Thread)
-	content = models.TextField(max_length=1000)
+	content = models.TextField(max_length=7000)
 	publisher = models.ForeignKey(User)
 	publication_datetime = models.DateTimeField(auto_now_add=True)
 	upvotes = property(_get_upvotes)
