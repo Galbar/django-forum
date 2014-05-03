@@ -1321,7 +1321,7 @@ render_bbcode = _postmarkup.render_to_html
 
 def _tests():
 
-    import sys
+    #import sys
     #sys.stdout=open('test.htm', 'w')
 
     post_markup = create(use_pygments=True)

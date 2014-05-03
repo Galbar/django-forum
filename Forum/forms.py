@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from django import forms
 from Forum.models import *
-from django.core.validators import MaxLengthValidator
 
 class FormPost(forms.ModelForm):
     title = forms.CharField(max_length=Post._meta.get_field('title').max_length, required=False)

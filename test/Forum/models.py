@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.core.exceptions import ObjectDoesNotExist
 from django.template.defaultfilters import slugify
 from django.db import models

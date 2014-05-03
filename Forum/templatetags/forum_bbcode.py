@@ -1,4 +1,3 @@
-import re
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.template.defaultfilters import stringfilter

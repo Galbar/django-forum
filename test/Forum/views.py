@@ -4,7 +4,6 @@ from django.http import Http404, HttpResponse
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as lgout, authenticate, login as lgin
-from django.template.defaultfilters import slugify
 from django.shortcuts import render, redirect
 from datetime import datetime
 from Forum.models import *

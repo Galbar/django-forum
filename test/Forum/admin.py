@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.forms.models import BaseInlineFormSet
 from django.core.urlresolvers import reverse
 from Forum.models import Subforum, Post, PostReported, PostEdited, Thread, Poll, PollOption, Forum
 from django.utils.safestring import mark_safe

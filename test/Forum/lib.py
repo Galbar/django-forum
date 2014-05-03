@@ -1,7 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import redirect
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.http import Http404
 from Forum.models import *
 from Forum.settings import *
