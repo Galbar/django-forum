@@ -30,10 +30,10 @@ def login(request, forum_id, template="Forum/forms/login.html", template_ajax="F
 					raise Http404
 	if not form:
 		form = FormUserLogin()
-	c = RequestContext(request, {
-							'forum_id':forum_id,
-							'form': form,
-						})
+	c = {
+			'forum_id':forum_id,
+			'form': form,
+		}
 	if request.is_ajax():
 		return render(request, template_ajax, c)
 	else:
@@ -79,22 +79,22 @@ def subforum(request, forum_id, subforum_id, subforum_slug, page=1, template=SUB
 				page = int(page) -1
 				subforum_num_pages = int(ceil(float(len(thread_list))/float(forum.threads_per_page)))
 				if (subforum_num_pages > page and 0 <= page) or subforum_num_pages == 0:
-					c = RequestContext(request, {
-											'forum_id':forum_id,
-											'forum': subforum,
-											'subforum_list':subforum_list,
-											'thread_list':thread_list[(page*forum.threads_per_page):(page*forum.threads_per_page)+forum.threads_per_page],
-											'subforum_current_page':page+1,
-											'subforum_pages':range(max(page, 1), min(page+3, subforum_num_pages+1)),
-											'is_admin':user_has_permission(forum.admin_permission, request.user),
-											'is_moderator': is_mod,
-											'can_create_thread':can_create_thread and request.user.is_authenticated(),
-										})
+					c = {
+							'forum_id':forum_id,
+							'forum': subforum,
+							'subforum_list':subforum_list,
+							'thread_list':thread_list[(page*forum.threads_per_page):(page*forum.threads_per_page)+forum.threads_per_page],
+							'subforum_current_page':page+1,
+							'subforum_pages':range(max(page, 1), min(page+3, subforum_num_pages+1)),
+							'is_admin':user_has_permission(forum.admin_permission, request.user),
+							'is_moderator': is_mod,
+							'can_create_thread':can_create_thread and request.user.is_authenticated(),
+						}
 					return render(request, template, c)
 			else:
-				c = RequestContext(request, {
-											'forum_id':forum_id,
-					})
+				c = {
+						'forum_id':forum_id,
+					}
 				return render(request, CANT_VIEW_CONTENT, c)
 	
 	raise Http404
@@ -128,18 +128,18 @@ def newSubforum(request, forum_id, subforum_id, subforum_slug, template=FORM_TEM
 							reply_thread_permission = subforum.reply_thread_permission,
 						)
 					new_subforum_form = FormSubforum(instance=new_subforum)
-				c = RequestContext(request, {
-										'forum_id':forum_id,
-										'form': new_subforum_form,
-										'page_title': 'Create Subforum',
-										'title': 'Create Subforum',
-										'submit_btn_text': 'Create',
-									})
+				c = {
+						'forum_id':forum_id,
+						'form': new_subforum_form,
+						'page_title': 'Create Subforum',
+						'title': 'Create Subforum',
+						'submit_btn_text': 'Create',
+					}
 				return render(request, template, c)
 			else:
-				c = RequestContext(request, {
-											'forum_id':forum_id,
-					})
+				c = {
+						'forum_id':forum_id,
+					}
 				return render(request, CANT_VIEW_CONTENT, c)
 	
 	raise Http404
@@ -176,22 +176,22 @@ def thread(request, forum_id, thread_id, thread_slug, page=1, template=THREAD_TE
 					set_visit(thread, request.user)
 					thread.visit_counter += 1
 					thread.save()
-					c = RequestContext(request, {
-											'forum_id':forum_id,
-											'thread': thread,
-											'post_list':post_list[(page*forum.posts_per_page):(page*forum.posts_per_page)+forum.posts_per_page],
-											'thread_current_page':page+1,
-											'thread_pages':range(max(page, 1), min(page+3, thread_num_pages+1)),
-											'is_moderator': is_mod,
-											'is_admin':user_has_permission(forum.admin_permission, request.user),
-											'can_post':can_post and request.user.is_authenticated() and (not thread.closed or is_mod),
-											'poll': poll,
-										})
+					c = {
+							'forum_id':forum_id,
+							'thread': thread,
+							'post_list':post_list[(page*forum.posts_per_page):(page*forum.posts_per_page)+forum.posts_per_page],
+							'thread_current_page':page+1,
+							'thread_pages':range(max(page, 1), min(page+3, thread_num_pages+1)),
+							'is_moderator': is_mod,
+							'is_admin':user_has_permission(forum.admin_permission, request.user),
+							'can_post':can_post and request.user.is_authenticated() and (not thread.closed or is_mod),
+							'poll': poll,
+						}
 					return render(request, template, c)
 			else:
-				c = RequestContext(request, {
-											'forum_id':forum_id,
-					})
+				c = {
+						'forum_id':forum_id,
+					}
 				return render(request, CANT_VIEW_CONTENT, c)
 	raise Http404
 
@@ -231,11 +231,11 @@ def saveThreadSettings(request, forum_id, thread_id, thread_slug, template="Foru
 						return redirect('Forum.views.thread', forum_id=forum_id, thread_id=thread_id, thread_slug=thread.slug())
 				else:
 					form = FormThreadSettings(instance=thread)
-					c = RequestContext(request, {
-										'forum_id':forum_id,
-										'form': form,
-										'thread': thread,
-									})
+					c = {
+							'forum_id':forum_id,
+							'form': form,
+							'thread': thread,
+						}
 					return render(request, template, c)
 	raise Http404
 
@@ -304,18 +304,18 @@ def newThread(request, forum_id, subforum_id, subforum_slug, template="Forum/for
 				else:
 					new_post = Post()
 					new_post_form = FormNewThread(instance=new_post)
-				c = RequestContext(request, {
-										'forum_id':forum_id,
-										'form': new_post_form,
-										'page_title': 'New Thread',
-										'title': 'New Thread',
-										'submit_btn_text': 'Create',
-									})
+				c = {
+						'forum_id':forum_id,
+						'form': new_post_form,
+						'page_title': 'New Thread',
+						'title': 'New Thread',
+						'submit_btn_text': 'Create',
+					}
 				return render(request, template, c)
 			else:
-				c = RequestContext(request, {
-											'forum_id':forum_id,
-					})
+				c = {
+						'forum_id':forum_id,
+					}
 				return render(request, CANT_VIEW_CONTENT, c)
 	
 	raise Http404
@@ -366,26 +366,26 @@ def replyThread(request, forum_id, thread_id, thread_slug, template="Forum/forms
 						new_post_form = FormPost(instance=new_post)
 				if request.is_ajax():
 					template = template_ajax
-					c = RequestContext(request, {
-											'forum_id':forum_id,
-											'form': new_post_form,
-											'thread':thread,
-										})
+					c = {
+							'forum_id':forum_id,
+							'form': new_post_form,
+							'thread':thread,
+						}
 				else:
-					c = RequestContext(request, {
-										'forum_id':forum_id,
-										'form': new_post_form,
-										'page_title': 'Reply Thread',
-										'title': 'Reply Thread',
-										'submit_btn_text': 'Send',
-									})
+					c = {
+							'forum_id':forum_id,
+							'form': new_post_form,
+							'page_title': 'Reply Thread',
+							'title': 'Reply Thread',
+							'submit_btn_text': 'Send',
+						}
 				return render(request, template, c)
 
 					
 			else:
-				c = RequestContext(request, {
-											'forum_id':forum_id,
-					})
+				c = {
+						'forum_id':forum_id,
+					}
 				return render(request, CANT_VIEW_CONTENT, c)
 	raise Http404
 
@@ -470,16 +470,16 @@ def editPost(request, forum_id, post_id, template="Forum/forms/edit_post.html", 
 				elif post.publisher == request.user:
 					edit_post_form = FormPost(instance=post)
 				else:
-					c = RequestContext(request, {
-											'forum_id':forum_id,
-						})
+					c = {
+							'forum_id':forum_id,
+						}
 					return render(request, CANT_VIEW_CONTENT, c)
-			c = RequestContext(request, {
-									'forum_id':forum_id,
-									'form': edit_post_form,
-									'post':post,
-									'user_is_mod':user_has_permission(post.thread.parent.mod_permission, request.user),
-								})
+			c = {
+					'forum_id':forum_id,
+					'form': edit_post_form,
+					'post':post,
+					'user_is_mod':user_has_permission(post.thread.parent.mod_permission, request.user),
+				}
 			if request.is_ajax():
 				return render(request, template_ajax, c)
 			else:
@@ -504,11 +504,11 @@ def reportPost(request, forum_id, post_id, template="Forum/forms/report_post.htm
 					return redirect('Forum.views.post', forum_id=forum_id, post_id=post.local_id)
 			else:
 				report_post_form = FormReportPost()
-			c = RequestContext(request, {
-									'forum_id':forum_id,
-									'form': report_post_form,
-									'post': post,
-								})
+			c = {
+					'forum_id':forum_id,
+					'form': report_post_form,
+					'post': post,
+				}
 			if request.is_ajax():
 				return render(request, template_ajax, c)
 			else:
