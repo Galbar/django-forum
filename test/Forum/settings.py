@@ -25,3 +25,9 @@ Template context variables:
   submit_btn_text: Text on the submit form button
 """
 FORM_TEMPLATE = 'Forum/form.html'
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
