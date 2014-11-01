@@ -1,7 +1,7 @@
 django-forum
 ============
 
-A forum app for django.
+A forum app for django-1.7.
 
 TODO: Administration pannel.
 
