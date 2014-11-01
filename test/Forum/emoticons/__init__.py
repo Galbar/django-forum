@@ -1,1 +1,0 @@
-from forum_emoticons import render_emoticons

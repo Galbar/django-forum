@@ -11,7 +11,7 @@
 				{% if l == forum.forum.main_forum %}
 					<a href="{% url 'Forum.views.forum' forum_id=forum.forum.local_id %}">
 				{% else %}
-					<a href="{% url 'Forum.views.subforum' forum_id=thread.forum.local_id subforum_id=l.local_id subforum_slug=l.slug subforum_slug=l.slug %}">
+					<a href="{% url 'Forum.views.subforum' forum_id=forum.forum.local_id subforum_id=l.local_id subforum_slug=l.slug subforum_slug=l.slug %}">
 				{% endif %}
 					{{ l.name }}
 				</a>

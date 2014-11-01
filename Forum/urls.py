@@ -28,7 +28,7 @@ urlpatterns = patterns('',
     url(r'^post/(?P<post_id>\d+)/vote/up/$', views.votePostUp),
     url(r'^post/(?P<post_id>\d+)/vote/down/$', views.votePostDown),
     #System
-    url(r'^login/$', views.login),
-    url(r'^logout/$', views.logout),
+    url(r'^accounts/login/$', views.login),
+    url(r'^accounts/logout/$', views.logout),
 
 )

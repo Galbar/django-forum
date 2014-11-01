@@ -11,57 +11,54 @@ from Forum.lib import user_has_permission
 class PerInstancePerm(models.Model):
 	"""Classes that inherit from this one can have per-instance permissions."""
 
-	def __init__(self, *args, **kwargs):
-		super(PerInstancePerm, self).__init__(*args, **kwargs)
-		self._content_type = ContentType.objects.get_for_model(PerInstancePerm)
+	def perms(self):
+		return self.permission_set.all();
 
-	def _permCodename(self, codename):
-		return str(self.id)+"."+codename
-
-	def _groupName(self, name):
-		return "Forum.PerInstancePerm."+str(self.id)+"."+name
-
-	def perms(self, **kwargs):
-		return self.permission_set.filter(**kwargs);
+	def has_perm(self, codename):
+		try:
+			self.permission_set.get(codename=codename,content_type=ContentType.objects.get_for_model(PerInstancePerm))
+			return True
+		except ObjectDoesNotExist:
+			return False
 
 	def add_perm(self, codename, name):
 		try:
-			self.permission_set.get(codename=self._permCodename(codename),name=name,content_type=self._content_type)
+			self.permission_set.get(codename=codename,name=name,content_type=ContentType.objects.get_for_model(PerInstancePerm))
 			return None
 		except ObjectDoesNotExist:
-			p = ForumPermission(instance=self,codename=self._permCodename(codename),name=name,content_type=self._content_type)
+			p = ForumPermission(instance=self,codename=codename,name=name,content_type=ContentType.objects.get_for_model(PerInstancePerm))
 			p.save()
 			return p
 
 	def remove_perm(self, codename):
 		try:
-			self.permission_set.get(codename=self._permCodename(codename),content_type=self._content_type).delete()
+			self.permission_set.get(codename=codename,content_type=ContentType.objects.get_for_model(PerInstancePerm)).delete()
 			return True
 		except ObjectDoesNotExist:
 			return False
 
-	def groups(self, **kwargs):
-		return self.group_set.filter(**kwargs);
+	def groups(self):
+		return self.group_set.all();
 
 	def add_group(self, name):
 		try:
-			self.group_set.get(name=self._groupName(name))
+			self.group_set.get(name=name)
 			return None
 		except ObjectDoesNotExist:
-			g = ForumGroup(instance=self,name=self._groupName(name))
+			g = ForumGroup(instance=self,name=name)
 			g.save()
 			return g
 
 	def remove_group(self, name):
 		try:
-			self.group_set.get(name=self._groupName(name))
+			self.group_set.get(name=name)
 			return True
 		except ObjectDoesNotExist:
 			return False
 
 	def get_group(self, name):
 		try:
-			return self.group_set.get(name=self._groupName(name))
+			return self.group_set.get(name=name)
 		except ObjectDoesNotExist:
 			return None
 
@@ -78,21 +75,10 @@ class Forum(PerInstancePerm):
 	def _get_main_forum(self):
 		return self.subforum_set.get(local_id=0)
 
-	def __init__(self, *args, **kwargs):
-		super(Forum, self).__init__(*args, **kwargs)
-		self._content_type = ContentType.objects.get_for_model(Forum)
-
-	def _permCodename(self, codename):
-		return str(self.local_id)+"."+codename
-
-	def _groupName(self, name):
-		return "Forum.Forum."+str(self.local_id)+"."+name
-
 	local_id = models.IntegerField(unique=True)
 	name = models.CharField(max_length=100) #name of the Forum instance (for listing and icons and stuff)
 	main_forum = property(_get_main_forum)
 	admin_permission = models.CharField(max_length=40, default="none")
-	member_permission = models.CharField(max_length=40, default="none")
 	# Votes config
 	allow_up_votes = models.BooleanField(default=True)
 	allow_down_votes = models.BooleanField(default=True)
@@ -108,27 +94,44 @@ class Forum(PerInstancePerm):
 	def slug(self):
 		return '-'+slugify(self.name)
 
-	def canAdministrate(self, user):
-		return user.has_perm(self.admin_permission)
-
-class Subforum(models.Model):
+class Subforum(PerInstancePerm):
 	local_id = models.IntegerField()
 	name = models.CharField(max_length=100)
 	parent = models.ForeignKey('self', related_name="child_set", blank=True, null=True)
 	forum = models.ForeignKey(Forum)
+	view_permission = models.CharField(max_length=40, default="none")
+	mod_permission = models.CharField(max_length=40, default="none") # or user has permission "Forum.global_moderator"
+	create_thread_permission = models.CharField(max_length=40, default="none")
+	reply_thread_permission = models.CharField(max_length=40, default="none")
 	description = models.TextField(blank=True)
 	creator = models.ForeignKey(User, null=True)
 	creation_datetime = models.DateTimeField(auto_now_add=True, null=True)
-	# can do perms
-	view_permission = models.CharField(max_length=40, default="none")
-	mod_permission = models.CharField(max_length=40, default="none")
-	create_thread_permission = models.CharField(max_length=40, default="none")
-	reply_thread_permission = models.CharField(max_length=40, default="none")
-	# can't do perms
-	no_view_permission = models.CharField(max_length=40, default="none")
-	no_mod_permission = models.CharField(max_length=40, default="none")
-	no_create_thread_permission = models.CharField(max_length=40, default="none")
-	no_reply_thread_permission = models.CharField(max_length=40, default="none")
+
+	# Perms stuff
+	def perms(self):
+		return Permission.objects.filter(codename__startswith=str(self.forum.id)+".");
+
+	def has_perm(self, codename):
+		try:
+			Permission.objects.get(codename=str(self.forum.id)+"."+codename,content_type=ContentType.objects.get_for_model(PerInstancePerm))
+			return True
+		except ObjectDoesNotExist:
+			return False
+
+	def add_perm(self, codename, name):
+		try:
+			Permission.objects.get(codename=str(self.forum.id)+"."+codename,name=name,content_type=ContentType.objects.get_for_model(PerInstancePerm))
+			return False
+		except ObjectDoesNotExist:
+			Permission(codename=str(self.forum.id)+"."+codename,name=name,content_type=ContentType.objects.get_for_model(PerInstancePerm)).save()
+			return True
+
+	def remove_perm(self, codename):
+		try:
+			Permission.objects.get(codename=str(self.forum.id)+"."+codename,content_type=ContentType.objects.get_for_model(PerInstancePerm)).delete()
+			return True
+		except ObjectDoesNotExist:
+			return False
 
 	class Meta:
 		unique_together = ('local_id','forum')
@@ -150,98 +153,6 @@ class Subforum(models.Model):
 
 	def getLastModifiedThread(self):
 		return self.thread_set.all().order_by('-last_publication_datetime').first()
-
-	def canView(self, user):
-		if user.has_perm("Forum.forum_admin"):
-			return True
-		if user.has_perm("Forum."+self.forum.member_permission):
-			if user.has_perm("Forum."+self.forum.admin_permission):
-				return True
-			elif user.has_perm("Forum."+self.view_permission):
-				return True
-			elif user.has_perm("Forum."+self.no_view_permission):
-				return False
-			elif self.parent != None:
-				return self.parent.canView(user)
-			else:
-				return False
-		else:
-			g = self.forum.get_group("Visitors")
-			if g.permissions.filter(codename=self.view_permission).exists():
-				return True
-			elif self.parent != None:
-				return self.parent.canView(user)
-			else:
-				return False
-
-	def canReplyThread(self, user):
-		if user.has_perm("Forum.forum_admin"):
-			return True
-		if user.has_perm("Forum."+self.forum.member_permission):
-			if user.has_perm("Forum."+self.forum.admin_permission):
-				return True
-			elif user.has_perm("Forum."+self.reply_thread_permission):
-				return True
-			elif user.has_perm("Forum."+self.no_reply_thread_permission):
-				return False
-			elif self.parent != None:
-				return self.parent.canReplyThread(user)
-			else:
-				return False
-		else:
-			g = self.forum.get_group("Visitors")
-			if g.permissions.filter(codename=self.reply_thread_permission).exists():
-				return True
-			elif self.parent != None:
-				return self.parent.canReplyThread(user)
-			else:
-				return False
-
-	def canCreateThread(self, user):
-		if user.has_perm("Forum.forum_admin"):
-			return True
-		if user.has_perm("Forum."+self.forum.member_permission):
-			if user.has_perm("Forum."+self.forum.admin_permission):
-				return True
-			elif user.has_perm("Forum."+self.create_thread_permission):
-				return True
-			elif user.has_perm("Forum."+self.no_create_thread_permission):
-				return False
-			elif self.parent != None:
-				return self.parent.canCreateThread(user)
-			else:
-				return False
-		else:
-			g = self.forum.get_group("Visitors")
-			if g.permissions.filter(codename=self.create_thread_permission).exists():
-				return True
-			elif self.parent != None:
-				return self.parent.canCreateThread(user)
-			else:
-				return False
-
-	def canModerate(self, user):
-		if user.has_perm("Forum.forum_admin"):
-			return True
-		if user.has_perm("Forum."+self.forum.member_permission):
-			if user.has_perm("Forum."+self.forum.admin_permission):
-				return True
-			elif user.has_perm("Forum."+self.mod_permission):
-				return True
-			elif user.has_perm("Forum."+self.no_mod_permission):
-				return False
-			elif self.parent != None:
-				return self.parent.canModerate(user)
-			else:
-				return False
-		else:
-			g = self.forum.get_group("Visitors")
-			if g.permissions.filter(codename=self.mod_permission).exists():
-				return True
-			elif self.parent != None:
-				return self.parent.canModerate(user)
-			else:
-				return False
 
 	def isVisited(self, user):
 		if self.thread_set.count() == 0 or not user.is_authenticated():
