@@ -441,7 +441,6 @@ def editPost(request, forum_id, post_id, template="Forum/forms/edit_post.html", 
 		post = get_post_instance(forum, post_id)
 		if post and post.thread.parent.canView(request.user):
 			post_old_title = post.title
-			post_old_content = post.content
 			if request.method == 'POST':
 				if post.thread.parent.canModerate(request.user):
 					edit_post_form = FormPost_Mod(request.POST, instance=post)
@@ -453,9 +452,7 @@ def editPost(request, forum_id, post_id, template="Forum/forms/edit_post.html", 
 						user=request.user,
 						datetime=datetime.now(),
 						reason='',
-						old_title=post_old_title,
 						new_title=post.title,
-						old_content=post_old_content,
 						new_content=post.content,
 						user_is_moderator = post.thread.parent.canModerate(request.user),
 						user_is_administrator = forum.canAdministrate(request.user),
