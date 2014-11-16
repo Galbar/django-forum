@@ -109,7 +109,7 @@ class Forum(PerInstancePerm):
 		return '-'+slugify(self.name)
 
 	def canAdministrate(self, user):
-		return user.has_perm(self.admin_permission)
+		return user.has_perm("Forum."+self.admin_permission)
 
 class Subforum(models.Model):
 	local_id = models.IntegerField()
