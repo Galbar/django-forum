@@ -411,9 +411,7 @@ class PostEdited(models.Model):
 	datetime = models.DateTimeField(auto_now_add=True)
 	reason = models.CharField(max_length=500)
 	old_title = models.CharField(max_length=200, blank=True)
-	new_title = models.CharField(max_length=200, blank=True)
 	old_content = models.TextField()
-	new_content = models.TextField()
 	user_is_moderator = models.BooleanField(default=False)
 	user_is_administrator = models.BooleanField(default=False)
 	class Meta:

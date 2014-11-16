@@ -35,7 +35,7 @@ class PostEditedInline(admin.StackedInline):
 	extra = 0
 	can_delete = False
 	
-	readonly_fields = ('user','datetime','reason','old_content','new_content')
+	readonly_fields = ('user','datetime','reason','old_title','old_content')
 
 
 class PostAdmin(admin.ModelAdmin):
