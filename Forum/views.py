@@ -191,7 +191,7 @@ def thread(request, forum_id, thread_id, thread_slug, page=1, template=THREAD_TE
 							'thread_current_page':page+1,
 							'thread_pages':range(max(page, 1), min(page+3, thread_num_pages+1)),
 							'is_moderator': is_mod,
-							'is_admin':user_has_permission(forum.admin_permission, request.user),
+							'is_admin':forum.canAdministrate(request.user),
 							'can_post':can_post and request.user.is_authenticated() and (not thread.closed or is_mod),
 							'poll': poll,
 						}
